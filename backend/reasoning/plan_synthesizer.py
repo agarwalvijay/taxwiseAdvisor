@@ -27,6 +27,12 @@ _SYSTEM = (
     "Output valid JSON only."
 )
 
+# IL state flat income tax rate (applied to conversion income, not retirement distributions)
+_IL_STATE_TAX_RATE = 0.0495
+
+# IRS Uniform Lifetime Table factor at age 73
+_RMD_FACTOR_73 = 26.5
+
 
 class PlanSynthesizer:
     async def run(
@@ -53,6 +59,9 @@ class PlanSynthesizer:
         taxable_balance = sum(
             (a.total_value or 0) for a in accounts.taxable_brokerage
         )
+        hsa_balance = sum(
+            (a.balance or 0) for a in accounts.hsa
+        )
 
         snapshot_summary = {
             "age": personal.age,
@@ -60,14 +69,29 @@ class PlanSynthesizer:
             "filing_status": personal.filing_status,
             "state": personal.state,
             "retirement_target_age": personal.retirement_target_age,
+            "years_to_retirement": personal.retirement_target_age - personal.age,
             "current_agi": snapshot.income.current_year_agi,
             "total_pretax_balance": pretax_balance,
             "total_roth_balance": roth_balance,
             "total_taxable_balance": taxable_balance,
+            "total_hsa_balance": hsa_balance,
             "cash_savings": accounts.cash_savings,
+            "income_projections": [
+                p.model_dump() for p in (snapshot.income.projections or [])
+            ],
             "social_security": (
                 snapshot.income.social_security.model_dump()
                 if snapshot.income.social_security
+                else None
+            ),
+            "tax_profile": (
+                snapshot.tax_profile.model_dump()
+                if snapshot.tax_profile
+                else None
+            ),
+            "rmd_profile": (
+                snapshot.rmd_profile.model_dump()
+                if snapshot.rmd_profile
                 else None
             ),
         }
@@ -88,7 +112,10 @@ class PlanSynthesizer:
 
         result = await self._call_with_retry(user_message)
 
-        # Post-processing assertions
+        # Deterministic post-processing
+        result = _post_process(result, snapshot, trajectory, conversions)
+
+        # Assertions
         if not result.priority_actions:
             raise ReasoningStepError(
                 "plan_synthesizer",
@@ -110,7 +137,7 @@ class PlanSynthesizer:
             try:
                 response = await client.messages.create(
                     model=_MODEL,
-                    max_tokens=4096,
+                    max_tokens=8192,
                     system=_SYSTEM,
                     messages=[{"role": "user", "content": user_message}],
                 )
@@ -165,3 +192,75 @@ class PlanSynthesizer:
                 )
 
         raise ReasoningStepError("plan_synthesizer", "Exhausted retries.")
+
+
+def _post_process(
+    result: PlanSynthesizerOutput,
+    snapshot: ClientFinancialSnapshotSchema,
+    trajectory: TaxTrajectoryOutput,
+    conversions: ConversionOptimizerOutput,
+) -> PlanSynthesizerOutput:
+    """
+    Deterministic post-processing corrections applied after Claude's output.
+
+    Step 1: Fill cumulative_converted as running total across conversion rows.
+    Step 2: Override state_tax for IL clients (must equal convert_amount × 0.0495).
+    Step 3: Recalculate total_tax and effective_rate_pct per row.
+    Step 4: Recalculate conversion table summary totals.
+    Step 5: Verify RMD math — log warning if projected_first_rmd is significantly off.
+    """
+    state = snapshot.personal.state.upper() if snapshot.personal.state else ""
+    rows = result.conversion_table.rows
+
+    # Step 1 & 2 & 3: Iterate rows, fix state_tax (IL), recalculate totals
+    running_total = 0.0
+    for row in rows:
+        # Step 2: IL state tax override
+        if state == "IL":
+            expected_state_tax = round(row.convert_amount * _IL_STATE_TAX_RATE, 2)
+            if abs(row.state_tax - expected_state_tax) > 1.0:
+                logger.info(
+                    "plan_synthesizer post_process: correcting IL state_tax for year=%d "
+                    "from %.2f to %.2f",
+                    row.year, row.state_tax, expected_state_tax,
+                )
+                row.state_tax = expected_state_tax
+
+        # Step 3: Recalculate total_tax and effective_rate_pct
+        row.total_tax = round(row.federal_tax + row.state_tax, 2)
+        if row.convert_amount > 0:
+            row.effective_rate_pct = round(row.total_tax / row.convert_amount * 100, 1)
+
+        # Step 1: cumulative_converted running total
+        running_total += row.convert_amount
+        row.cumulative_converted = round(running_total, 2)
+
+    # Step 4: Recalculate conversion table summary
+    ct = result.conversion_table
+    ct.total_converted = round(sum(r.convert_amount for r in rows), 2)
+    ct.total_tax_paid = round(sum(r.total_tax for r in rows), 2)
+    if ct.total_converted > 0:
+        ct.blended_effective_rate_pct = round(ct.total_tax_paid / ct.total_converted * 100, 1)
+
+    # Verify total_converted matches step_2 (log discrepancy if > $1)
+    step2_total = conversions.total_converted
+    if abs(ct.total_converted - step2_total) > 1.0:
+        logger.warning(
+            "plan_synthesizer post_process: conversion_table.total_converted=%.2f "
+            "differs from step_2.total_converted=%.2f by %.2f",
+            ct.total_converted, step2_total, abs(ct.total_converted - step2_total),
+        )
+
+    # Step 5: RMD math verification
+    rmd_profile = snapshot.rmd_profile
+    if rmd_profile and rmd_profile.projected_pretax_balance_at_rmd and rmd_profile.projected_first_rmd:
+        expected_rmd = rmd_profile.projected_pretax_balance_at_rmd / _RMD_FACTOR_73
+        actual_rmd = rmd_profile.projected_first_rmd
+        if abs(actual_rmd - expected_rmd) / max(expected_rmd, 1) > 0.10:
+            logger.warning(
+                "plan_synthesizer post_process: projected_first_rmd=%.2f differs from "
+                "expected (balance/26.5)=%.2f by more than 10%% — verify RMD calculation",
+                actual_rmd, expected_rmd,
+            )
+
+    return result

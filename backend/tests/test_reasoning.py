@@ -272,48 +272,135 @@ TLH_RESPONSE = {
 
 SYNTHESIS_RESPONSE = {
     "executive_summary": (
-        "This client has significant Roth conversion opportunity over the next 5 years. "
-        "The combination of a multi-year conversion program, immediate tax-loss harvesting, "
-        "and asset location optimization is projected to save substantial lifetime taxes."
+        "This client has a significant Roth conversion opportunity over the next 5 years. "
+        "A 3-year conversion program starting in 2028 converts $546,000 at a blended 16.4% "
+        "effective rate — well below the 24%+ bracket at RMD start. Combined with immediate "
+        "TLH and asset location moves, this plan is estimated to save $140,000+ in lifetime taxes."
     ),
+    "client_snapshot_summary": {
+        "age": 54,
+        "spouse_age": 51,
+        "filing_status": "married_filing_jointly",
+        "state": "IL",
+        "retirement_target_age": 62,
+        "years_to_retirement": 8,
+        "current_agi": 271000.0,
+        "total_pretax_balance": 1057000.0,
+        "total_roth_balance": 88000.0,
+        "total_taxable_balance": 487250.0,
+        "total_hsa_balance": 24000.0,
+        "cash_savings": 65000.0,
+        "years_until_rmd": 19,
+        "projected_first_rmd": 76642.0,
+    },
+    "do_nothing_comparison": {
+        "projected_rmd_at_73": 76642.0,
+        "rmd_bracket": 0.24,
+        "irmaa_triggered": True,
+        "estimated_lifetime_tax_savings": 140000.0,
+        "narrative": (
+            "Without Roth conversions, the client's pre-tax balance grows to ~$2,031,000 by age 73, "
+            "generating RMDs of $76,642/year. Combined with Social Security, these RMDs trigger the "
+            "24% bracket and IRMAA surcharges — an estimated $140,000 in avoidable lifetime taxes."
+        ),
+    },
     "priority_actions": [
         {
             "priority": 1,
             "category": "roth_conversion",
-            "action": "Convert $182,000 from Vanguard Traditional IRA to Roth IRA in 2028, paying approximately $38,877 in combined federal and Illinois state taxes from taxable brokerage funds.",
-            "rationale": "With zero income in 2028, the client can convert at a blended 16.4% rate instead of the 24%+ rate that will apply at RMD start. This saves roughly $14,000 in taxes on this single conversion.",
-            "estimated_benefit": "$140,000+ in lifetime tax savings across the full conversion program",
+            "action": "Convert $182,000 from Vanguard Traditional IRA to Roth IRA in 2028, paying $38,877 in combined federal and Illinois state taxes from taxable brokerage funds.",
+            "rationale": "With zero income in 2028, client converts at 16.4% blended vs. 24%+ at RMD start. IL taxes the conversion at 4.95% now, but future Roth withdrawals are IL state-tax-free.",
+            "estimated_benefit": "$140,000+ in lifetime tax savings across the 3-year conversion program",
             "urgency": "immediate",
             "confidence": "high",
         },
         {
             "priority": 2,
             "category": "tlh",
-            "action": "Sell 45 shares of AMZN and 200 shares of INTC in Fidelity taxable brokerage to harvest $8,447.50 in long-term losses. Purchase XLY and SOXX as replacements within 2 days.",
-            "rationale": "These positions are already at a loss. Harvesting now captures the tax benefit before conditions change, and replacement ETFs maintain similar market exposure.",
-            "estimated_benefit": "$1,588 in immediate tax savings (15% LTCG + 3.8% NIIT on losses)",
+            "action": "Sell 45 shares of AMZN and 200 shares of INTC to harvest $8,447.50 in long-term losses. Buy XLY and SOXX as replacements within 2 days. Wait 31 days before repurchasing.",
+            "rationale": "These positions are at a loss. Harvesting captures LTCG + NIIT savings while replacement ETFs maintain market exposure.",
+            "estimated_benefit": "$1,588 in immediate tax savings plus $321 in NIIT reduction",
             "urgency": "this_year",
             "confidence": "high",
         },
         {
             "priority": 3,
             "category": "asset_location",
-            "action": "Gradually shift BND (Vanguard Total Bond ETF) from the taxable Fidelity account to the Traditional IRA as the taxable portfolio is rebalanced.",
-            "rationale": "Bond interest is taxed as ordinary income. Moving bonds to tax-deferred accounts reduces annual tax drag.",
+            "action": "Gradually shift BND (Vanguard Total Bond ETF) from taxable Fidelity to Traditional IRA/401(k) during rebalancing.",
+            "rationale": "Bond interest is taxed as ordinary income in a taxable account. Moving bonds to tax-deferred reduces annual tax drag.",
             "estimated_benefit": "Estimated $500–$800/year in reduced tax drag on bond income",
             "urgency": "multi_year",
             "confidence": "medium",
         },
     ],
+    "conversion_table": {
+        "rows": [
+            {
+                "year": 2028,
+                "pre_conversion_income": 0.0,
+                "convert_amount": 182000.0,
+                "post_conversion_agi": 182000.0,
+                "federal_tax": 29868.0,
+                "state_tax": 9009.0,
+                "total_tax": 38877.0,
+                "effective_rate_pct": 16.4,
+                "cumulative_converted": 182000.0,
+                "irmaa_safe": True,
+                "note": "Fills 22% bracket, stays below IRMAA Tier 1 ($212k)",
+            },
+            {
+                "year": 2029,
+                "pre_conversion_income": 0.0,
+                "convert_amount": 182000.0,
+                "post_conversion_agi": 182000.0,
+                "federal_tax": 29868.0,
+                "state_tax": 9009.0,
+                "total_tax": 38877.0,
+                "effective_rate_pct": 16.4,
+                "cumulative_converted": 364000.0,
+                "irmaa_safe": True,
+                "note": "Second year of conversion program",
+            },
+            {
+                "year": 2030,
+                "pre_conversion_income": 0.0,
+                "convert_amount": 182000.0,
+                "post_conversion_agi": 182000.0,
+                "federal_tax": 29868.0,
+                "state_tax": 9009.0,
+                "total_tax": 38877.0,
+                "effective_rate_pct": 16.4,
+                "cumulative_converted": 546000.0,
+                "irmaa_safe": True,
+                "note": "Third and final year of conversion program",
+            },
+        ],
+        "total_converted": 546000.0,
+        "total_tax_paid": 116631.0,
+        "blended_effective_rate_pct": 16.4,
+        "il_state_tax_note": "Illinois taxes Roth conversions as ordinary income at 4.95%, but future Roth IRA withdrawals are Illinois state-tax-free.",
+    },
+    "tlh_summary": {
+        "available": True,
+        "total_harvestable_losses": 8447.50,
+        "estimated_total_tax_benefit": 1588.13,
+        "niit_benefit": 320.99,
+        "action_items": [
+            "Sell 45 shares AMZN → buy XLY. Est. tax benefit: $587.97 + $118.84 NIIT. Wait 31 days before repurchasing AMZN.",
+            "Sell 200 shares INTC → buy SOXX. Est. tax benefit: $1,000.16 + $202.16 NIIT. Wait 31 days before repurchasing INTC.",
+        ],
+        "unavailable_reason": None,
+    },
     "key_assumptions": [
         "Tax rates remain at current law levels through the planning horizon",
         "6% nominal annual growth applied to pre-tax retirement accounts",
         "Social Security benefit estimates as provided by client ($3,520/month at age 70)",
-        "Illinois state income tax rate of 4.95% applied to Roth conversions",
+        "Illinois state income tax rate of 4.95% applied to Roth conversions (future Roth withdrawals are IL state-tax-free)",
         "2026 MFJ standard deduction of $30,000 used for all conversion year calculations",
     ],
-    "data_gaps_affecting_plan": [],
+    "data_gaps": [],
     "plan_confidence": 0.88,
+    "urgency": "high",
     "disclaimer": (
         "This analysis was prepared by [Advisor Name] using TaxWise Advisor software as a planning tool. "
         "It is intended to support informed discussion between you and your financial advisor and does not "
@@ -323,7 +410,7 @@ SYNTHESIS_RESPONSE = {
         "returns that may not materialize. Before implementing any strategy described in this report, please "
         "consult with a qualified tax professional. Your advisor is responsible for the recommendations made to you."
     ),
-    "narrative": "This plan focuses on the multi-year Roth conversion opportunity as the highest-impact strategy.",
+    "narrative": "The most impactful action is a 3-year systematic Roth conversion program beginning in 2028.",
 }
 
 
@@ -469,6 +556,15 @@ async def test_plan_synthesizer(snapshot, trajectory_output, conversion_output, 
     assert result.executive_summary != ""
     assert result.disclaimer != ""
     assert result.plan_confidence > 0.70
+    # v2 new fields
+    assert result.client_snapshot_summary is not None
+    assert result.client_snapshot_summary.age == 54
+    assert result.do_nothing_comparison is not None
+    assert result.do_nothing_comparison.estimated_lifetime_tax_savings > 0
+    assert result.conversion_table is not None
+    assert len(result.conversion_table.rows) > 0
+    assert result.tlh_summary is not None
+    assert result.urgency in ("high", "medium", "low")
 
 
 # ---------------------------------------------------------------------------

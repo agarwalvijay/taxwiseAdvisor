@@ -22,6 +22,46 @@ _LOCAL_REPORTS_DIR = Path("/tmp/taxwise_reports")
 _jinja_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
 
 
+def _filter_currency(value) -> str:
+    """Format a number as currency: $1,234,567"""
+    try:
+        return f"${float(value):,.0f}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _filter_percentage(value, decimals: int = 1) -> str:
+    """Format a decimal as percentage: 0.24 → 24.0%"""
+    try:
+        return f"{float(value) * 100:.{decimals}f}%"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _filter_irmaa_safe(value: bool) -> str:
+    """Boolean → IRMAA-safe indicator."""
+    return "✓ Safe" if value else "✗ Risk"
+
+
+def _filter_urgency_class(value: str) -> str:
+    """Map urgency string to CSS class name."""
+    mapping = {
+        "immediate": "urgency-immediate",
+        "this_year": "urgency-this_year",
+        "multi_year": "urgency-multi_year",
+        "high": "urgency-immediate",
+        "medium": "urgency-this_year",
+        "low": "urgency-multi_year",
+    }
+    return mapping.get(str(value).lower(), "urgency-multi_year")
+
+
+_jinja_env.filters["currency"] = _filter_currency
+_jinja_env.filters["percentage"] = _filter_percentage
+_jinja_env.filters["irmaa_safe"] = _filter_irmaa_safe
+_jinja_env.filters["urgency_class"] = _filter_urgency_class
+
+
 class ReportGenerationError(Exception):
     pass
 

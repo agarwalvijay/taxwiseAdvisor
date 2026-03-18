@@ -141,6 +141,69 @@ class TLHAdvisorOutput(BaseModel):
     data_gaps: list[str] = Field(default_factory=list)
 
 
+class DataGap(BaseModel):
+    field: str
+    description: str
+    plan_impact: str
+    severity: Literal["high", "medium", "low"]
+
+
+class ClientSnapshotSummary(BaseModel):
+    age: int
+    spouse_age: Optional[int] = None
+    filing_status: str
+    state: str
+    retirement_target_age: int
+    years_to_retirement: int
+    current_agi: float
+    total_pretax_balance: float
+    total_roth_balance: float
+    total_taxable_balance: float
+    total_hsa_balance: float = 0.0
+    cash_savings: float = 0.0
+    years_until_rmd: int
+    projected_first_rmd: float
+
+
+class DoNothingComparison(BaseModel):
+    projected_rmd_at_73: float
+    rmd_bracket: float
+    irmaa_triggered: bool
+    estimated_lifetime_tax_savings: float
+    narrative: str
+
+
+class YearlyConversionRow(BaseModel):
+    year: int
+    pre_conversion_income: float
+    convert_amount: float
+    post_conversion_agi: float
+    federal_tax: float
+    state_tax: float
+    total_tax: float
+    effective_rate_pct: float
+    cumulative_converted: float
+    irmaa_safe: bool
+    note: Optional[str] = None
+
+
+class ConversionTableSummary(BaseModel):
+    rows: list[YearlyConversionRow]
+    total_converted: float
+    total_tax_paid: float
+    blended_effective_rate_pct: float
+    il_state_tax_note: str
+
+
+class TLHSummary(BaseModel):
+    available: bool
+    total_harvestable_losses: float = 0.0
+    estimated_total_tax_benefit: float = 0.0
+    niit_benefit: float = 0.0
+    action_items: list[str] = Field(default_factory=list)
+    unavailable_reason: Optional[str] = None
+
+
 class PriorityAction(BaseModel):
     priority: int
     category: Literal["roth_conversion", "tlh", "asset_location", "other"]
@@ -153,9 +216,14 @@ class PriorityAction(BaseModel):
 
 class PlanSynthesizerOutput(BaseModel):
     executive_summary: str
+    client_snapshot_summary: ClientSnapshotSummary
+    do_nothing_comparison: DoNothingComparison
     priority_actions: list[PriorityAction]
+    conversion_table: ConversionTableSummary
+    tlh_summary: TLHSummary
     key_assumptions: list[str] = Field(default_factory=list)
-    data_gaps_affecting_plan: list[str] = Field(default_factory=list)
+    data_gaps: list[DataGap] = Field(default_factory=list)
     plan_confidence: float
+    urgency: Literal["high", "medium", "low"]
     disclaimer: str
     narrative: str

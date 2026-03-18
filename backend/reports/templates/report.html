@@ -392,6 +392,23 @@
     <p>{{ step4.get('executive_summary', '') | default('') }}</p>
   </div>
 
+  {# Do Nothing Comparison #}
+  {% set do_nothing = step4.get('do_nothing_comparison', {}) %}
+  {% if do_nothing and do_nothing.get('estimated_lifetime_tax_savings') %}
+  <div class="callout-warning" style="margin-top: 10px;">
+    <strong>Without Action — What Happens If Nothing Changes:</strong><br/>
+    <span>Projected first RMD at age 73: <strong>${{ "{:,.0f}".format(do_nothing.get('projected_rmd_at_73') or 0) }}</strong></span>
+    {% if do_nothing.get('irmaa_triggered') %}
+    &nbsp;&bull;&nbsp;<span style="color:#D97706;"><strong>IRMAA surcharges triggered</strong></span>
+    {% endif %}
+    <br/>
+    <span style="color: #16A34A;"><strong>Estimated lifetime tax savings from this plan: ${{ "{:,.0f}".format(do_nothing.get('estimated_lifetime_tax_savings') or 0) }}</strong></span>
+    {% if do_nothing.get('narrative') %}
+    <br/><span class="small-gray" style="margin-top:6px; display:block;">{{ do_nothing.get('narrative', '') }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% set confidence = step4.get('plan_confidence') or 0 %}
   {% if confidence %}
   <p class="small-gray">Overall plan confidence: <strong>{{ (confidence * 100) | round(0) | int }}%</strong></p>
@@ -763,28 +780,26 @@
 <div id="roth-conversion" class="section">
   <h2>Roth Conversion Strategy</h2>
 
-  {% set conversion_plan = step2.get('conversion_plan', []) %}
-  {% if conversion_plan %}
+  {% set ct = step4.get('conversion_table', {}) %}
+  {% set conversion_rows = ct.get('rows', []) %}
+
+  {% if conversion_rows %}
 
   <!-- KPI summary for conversions -->
   <div class="kpi-grid" style="margin-bottom:20px;">
     <div class="kpi-card highlight">
       <div class="kpi-label">Total to Convert</div>
-      <div class="kpi-value">${{ "{:,.0f}".format((step2.get('total_converted') or 0)) }}</div>
-      <div class="kpi-sub">Over {{ conversion_plan | length }} year(s)</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((ct.get('total_converted') or 0)) }}</div>
+      <div class="kpi-sub">Over {{ conversion_rows | length }} year(s)</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Est. Tax Cost</div>
-      <div class="kpi-value">${{ "{:,.0f}".format((step2.get('estimated_total_tax_on_conversions') or 0)) }}</div>
+      <div class="kpi-label">Total Tax Cost</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((ct.get('total_tax_paid') or 0)) }}</div>
       <div class="kpi-sub">Federal + State</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Effective Tax Rate</div>
-      <div class="kpi-value">
-        {% set total = step2.get('total_converted') or 0 %}
-        {% set tax = step2.get('estimated_total_tax_on_conversions') or 0 %}
-        {% if total > 0 %}{{ "{:.1f}".format(tax / total * 100) }}%{% else %}N/A{% endif %}
-      </div>
+      <div class="kpi-label">Blended Effective Rate</div>
+      <div class="kpi-value">{{ ct.get('blended_effective_rate_pct') or '—' }}%</div>
       <div class="kpi-sub">On conversions</div>
     </div>
     <div class="kpi-card">
@@ -799,30 +814,36 @@
       <tr>
         <th>Year</th>
         <th class="text-right">Convert Amount</th>
-        <th class="text-right">Est. Federal Tax</th>
-        <th class="text-right">Est. State Tax</th>
-        <th class="text-right">Post-Conv. AGI</th>
-        <th class="text-center">IRMAA Safe</th>
+        <th class="text-right">Federal Tax</th>
+        <th class="text-right">State Tax (IL 4.95%)</th>
+        <th class="text-right">Total Tax</th>
+        <th class="text-right">Eff. Rate</th>
+        <th class="text-right">Cumulative</th>
+        <th class="text-center">IRMAA</th>
         <th>Notes</th>
       </tr>
     </thead>
     <tbody>
-      {% for row in conversion_plan %}
+      {% for row in conversion_rows %}
       <tr>
         <td>{{ row.get('year', '') }}</td>
         <td class="text-right">${{ "{:,.0f}".format((row.get('convert_amount') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('estimated_federal_tax') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('estimated_state_tax') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('post_conversion_agi') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('federal_tax') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('state_tax') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('total_tax') or 0)) }}</td>
+        <td class="text-right">{{ row.get('effective_rate_pct') or '—' }}%</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('cumulative_converted') or 0)) }}</td>
         <td class="text-center">{{ "✓" if row.get('irmaa_safe', False) else "✗" }}</td>
-        <td>{{ row.get('net_benefit_note', '') | default('') }}</td>
+        <td class="small-gray">{{ row.get('note', '') or '—' }}</td>
       </tr>
       {% endfor %}
       <tr class="total-row">
         <td><strong>Total</strong></td>
-        <td class="text-right">${{ "{:,.0f}".format((step2.get('total_converted') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((step2.get('estimated_total_tax_on_conversions') or 0)) }}</td>
+        <td class="text-right"><strong>${{ "{:,.0f}".format((ct.get('total_converted') or 0)) }}</strong></td>
         <td class="text-right">—</td>
+        <td class="text-right">—</td>
+        <td class="text-right"><strong>${{ "{:,.0f}".format((ct.get('total_tax_paid') or 0)) }}</strong></td>
+        <td class="text-right"><strong>{{ ct.get('blended_effective_rate_pct') or '—' }}%</strong></td>
         <td class="text-right">—</td>
         <td class="text-center">—</td>
         <td>—</td>
@@ -833,9 +854,10 @@
   <p class="small-gray">No Roth conversion data available.</p>
   {% endif %}
 
-  {% if step2.get('state_tax_note', '') %}
+  {% set il_note = ct.get('il_state_tax_note', '') or step2.get('state_tax_note', '') %}
+  {% if il_note %}
   <div class="callout">
-    <strong>State Tax Note:</strong> {{ step2.get('state_tax_note', '') }}
+    <strong>Illinois State Tax Note:</strong> {{ il_note }}
   </div>
   {% endif %}
 
@@ -857,17 +879,25 @@
   {% set opportunities = step3.get('tlh_opportunities', []) %}
   {% if opportunities %}
 
+  {% set tlh_sum = step4.get('tlh_summary', {}) %}
   <div class="kpi-grid" style="margin-bottom:18px;">
     <div class="kpi-card highlight">
       <div class="kpi-label">Total Harvestable Losses</div>
-      <div class="kpi-value">${{ "{:,.0f}".format((step3.get('total_harvestable_losses') or 0)) }}</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((tlh_sum.get('total_harvestable_losses') or step3.get('total_harvestable_losses') or 0)) }}</div>
       <div class="kpi-sub">{{ opportunities | length }} position(s)</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Est. Tax Benefit</div>
-      <div class="kpi-value">${{ "{:,.0f}".format((step3.get('estimated_total_tax_benefit') or 0)) }}</div>
-      <div class="kpi-sub">Net savings</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((tlh_sum.get('estimated_total_tax_benefit') or step3.get('estimated_total_tax_benefit') or 0)) }}</div>
+      <div class="kpi-sub">LTCG savings</div>
     </div>
+    {% if tlh_sum.get('niit_benefit') %}
+    <div class="kpi-card">
+      <div class="kpi-label">NIIT Reduction</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(tlh_sum.get('niit_benefit') or 0) }}</div>
+      <div class="kpi-sub">3.8% surtax saved</div>
+    </div>
+    {% endif %}
   </div>
 
   <table>
@@ -976,14 +1006,34 @@
   <p class="small-gray">No key assumptions recorded.</p>
   {% endif %}
 
-  {% set data_gaps = step4.get('data_gaps_affecting_plan', []) %}
+  {% set data_gaps = step4.get('data_gaps', []) %}
   {% if data_gaps %}
   <h3>Data Gaps Affecting This Plan</h3>
-  <ul>
-    {% for gap in data_gaps %}
-    <li>{{ gap }}</li>
-    {% endfor %}
-  </ul>
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Issue</th>
+        <th>Plan Impact</th>
+        <th>Severity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for gap in data_gaps %}
+      <tr>
+        <td><strong>{{ gap.get('field', '') }}</strong></td>
+        <td>{{ gap.get('description', '') }}</td>
+        <td>{{ gap.get('plan_impact', '') }}</td>
+        <td>
+          {% set sev = gap.get('severity', 'low') %}
+          {% if sev == 'high' %}<span style="color:#DC2626;font-weight:bold;">High</span>
+          {% elif sev == 'medium' %}<span style="color:#D97706;font-weight:bold;">Medium</span>
+          {% else %}<span style="color:#16A34A;">Low</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   {% endif %}
 </div>
 
