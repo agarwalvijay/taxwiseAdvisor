@@ -13,11 +13,12 @@ interface IncomeTableProps {
   initialRows?: IncomeRow[]
   onSave: (rows: IncomeRow[], ssStartAge?: number, ssBenefit?: number) => void
   loading?: boolean
+  conversionWindowYears?: number[]
 }
 
 const currentYear = new Date().getFullYear()
 
-export default function IncomeTable({ initialRows, onSave, loading }: IncomeTableProps) {
+export default function IncomeTable({ initialRows, onSave, loading, conversionWindowYears }: IncomeTableProps) {
   const [rows, setRows] = useState<IncomeRow[]>(
     initialRows ?? [
       { year: currentYear, estimated_income: 0, notes: '' },
@@ -57,6 +58,14 @@ export default function IncomeTable({ initialRows, onSave, loading }: IncomeTabl
     const ss = ssStartAge ? parseInt(ssStartAge) : undefined
     const benefit = ssBenefit ? parseFloat(ssBenefit) : undefined
     onSave(rows, ss, benefit)
+  }
+
+  const coveredYears = new Set(rows.map((r) => r.year))
+  const missingWindowYears = (conversionWindowYears ?? []).filter((y) => !coveredYears.has(y))
+
+  function addRetirementYearEstimates() {
+    const newRows = missingWindowYears.map((y) => ({ year: y, estimated_income: 0, notes: 'Retirement year (no earned income)' }))
+    setRows((prev) => [...prev, ...newRows].sort((a, b) => a.year - b.year))
   }
 
   return (
@@ -113,6 +122,17 @@ export default function IncomeTable({ initialRows, onSave, loading }: IncomeTabl
       </div>
 
       <Button variant="outline" size="sm" onClick={addRow}>+ Add Year</Button>
+
+      {missingWindowYears.length > 0 && (
+        <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <strong>Tip:</strong> The tax trajectory analysis identified {missingWindowYears.join(', ')} as ideal Roth conversion window year{missingWindowYears.length > 1 ? 's' : ''}, but income estimates for those years are missing. Personalized conversion amounts require this data.
+          <div className="mt-2">
+            <Button variant="outline" size="sm" onClick={addRetirementYearEstimates} className="border-amber-400 text-amber-800 hover:bg-amber-100">
+              + Add Retirement Year Estimates
+            </Button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <p className="text-red-600 text-sm font-medium bg-red-50 border border-red-200 rounded px-3 py-2">

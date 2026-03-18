@@ -431,7 +431,75 @@
   {% endif %}
 </div>
 
-<!-- ===== 3. FINANCIAL SNAPSHOT ===== -->
+<!-- ===== 3. DO-NOTHING vs THIS PLAN COMPARISON ===== -->
+{% set dnc = step4.get('do_nothing_comparison', {}) %}
+{% if dnc and dnc.get('pretax_at_73_without_plan') %}
+<div id="do-nothing-comparison" class="section">
+  <h2>Do-Nothing vs. This Plan: Side-by-Side Impact</h2>
+  <p class="section-intro">This table shows the projected difference between taking no action versus implementing the full tax optimization plan.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th class="text-right" style="background:#5a5a5a;">Without This Plan</th>
+        <th class="text-right" style="background:#16A34A;">With This Plan</th>
+        <th class="text-right">Difference</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pre-Tax Balance at Age 73</td>
+        <td class="text-right">{{ dnc.get('pretax_at_73_without_plan') | currency }}</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('pretax_at_73_with_plan') | currency }}</td>
+        <td class="text-right">{{ (dnc.get('pretax_at_73_with_plan', 0) - dnc.get('pretax_at_73_without_plan', 0)) | currency }}</td>
+      </tr>
+      <tr>
+        <td>First Year RMD (Age 73)</td>
+        <td class="text-right">{{ dnc.get('first_rmd_without_plan') | currency }}</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('first_rmd_with_plan') | currency }}</td>
+        <td class="text-right">{{ (dnc.get('first_rmd_with_plan', 0) - dnc.get('first_rmd_without_plan', 0)) | currency }}</td>
+      </tr>
+      <tr>
+        <td>Annual RMD Federal Tax (est.)</td>
+        <td class="text-right">{{ dnc.get('annual_rmd_tax_without_plan') | currency }}</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('annual_rmd_tax_with_plan') | currency }}</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ (dnc.get('annual_rmd_tax_with_plan', 0) - dnc.get('annual_rmd_tax_without_plan', 0)) | currency }}/yr</td>
+      </tr>
+      <tr>
+        <td>Roth Balance at Age 73</td>
+        <td class="text-right">{{ dnc.get('roth_at_73_without_plan') | currency }}</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('roth_at_73_with_plan') | currency }}</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">+{{ (dnc.get('roth_at_73_with_plan', 0) - dnc.get('roth_at_73_without_plan', 0)) | currency }}</td>
+      </tr>
+      <tr>
+        <td>IRMAA Surcharge at 73</td>
+        <td class="text-right" style="{% if dnc.get('irmaa_triggered') %}color:#DC2626;font-weight:bold;{% endif %}">
+          {{ "Yes — surcharges triggered" if dnc.get('irmaa_triggered') else "No" }}
+        </td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">Avoided</td>
+        <td class="text-right">—</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td colspan="2"><strong>Estimated Lifetime Tax Savings</strong></td>
+        <td class="text-right" style="color:#16A34A;" colspan="2">
+          <strong>{{ dnc.get('estimated_lifetime_tax_savings') | currency }}</strong>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  {% if dnc.get('narrative') %}
+  <div class="callout-warning">
+    {{ dnc.get('narrative') }}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ===== 4. FINANCIAL SNAPSHOT ===== -->
 <div id="financial-snapshot" class="section">
   <h2>Financial Snapshot</h2>
 
@@ -549,7 +617,7 @@
       <h3>Tax Profile</h3>
       <div class="info-row">
         <div class="info-key">Marginal Federal Bracket</div>
-        <div class="info-val">{{ ((tax_profile.get('current_marginal_bracket') or 0) * 100) | round(0) | int }}%</div>
+        <div class="info-val">{{ tax_profile.get('current_marginal_bracket') | percentage }}</div>
       </div>
       <div class="info-row">
         <div class="info-key">LTCG Rate</div>
@@ -783,6 +851,14 @@
   {% set ct = step4.get('conversion_table', {}) %}
   {% set conversion_rows = ct.get('rows', []) %}
 
+  {% if ct.get('illustrative', False) %}
+  <div class="callout-warning">
+    <strong>Illustrative Estimates Only</strong> — Income projections for the conversion window years were not provided.
+    These amounts assume $0 other income and cap conversions at the IRMAA Tier 1 threshold ($212,000 AGI).
+    <strong>Add retirement income projections in Step 3 to generate personalized conversion amounts.</strong>
+  </div>
+  {% endif %}
+
   {% if conversion_rows %}
 
   <!-- KPI summary for conversions -->
@@ -825,7 +901,7 @@
     </thead>
     <tbody>
       {% for row in conversion_rows %}
-      <tr>
+      <tr {% if ct.get('illustrative', False) %}style="background-color:#FFFBEB !important;"{% endif %}>
         <td>{{ row.get('year', '') }}</td>
         <td class="text-right">${{ "{:,.0f}".format((row.get('convert_amount') or 0)) }}</td>
         <td class="text-right">${{ "{:,.0f}".format((row.get('federal_tax') or 0)) }}</td>
@@ -980,6 +1056,11 @@
         <span class="urgency-{{ action.get('urgency', '') }}">&nbsp;[{{ action.get('urgency', '') | replace('_', ' ') | upper }}]</span>
       </div>
       <div style="margin-top: 4px;">{{ action.get('rationale', '') }}</div>
+      {% if action.get('consequence', '') %}
+      <div style="margin-top: 6px; background:#FFF3CD; border-left:3px solid #D97706; padding:6px 10px; font-size:9.5pt;">
+        <strong>{{ action.get('consequence', '') }}</strong>
+      </div>
+      {% endif %}
       {% if action.get('estimated_benefit', '') %}
       <div style="margin-top: 4px;" class="small-gray"><em>{{ action.get('estimated_benefit', '') }}</em></div>
       {% endif %}
@@ -1040,7 +1121,7 @@
 <!-- ===== 9. DISCLAIMER ===== -->
 <div id="disclaimer" class="section">
   <h2>Disclaimer</h2>
-  <p class="disclaimer-text">{{ step4.get('disclaimer', '') | default('This analysis is for informational purposes only and does not constitute financial, tax, or legal advice. Please consult a qualified professional before implementing any strategy.') }}</p>
+  <p class="disclaimer-text">{{ (step4.get('disclaimer', '') or 'This analysis is for informational purposes only and does not constitute financial, tax, or legal advice. Please consult a qualified professional before implementing any strategy.') | replace('[Advisor Name]', advisor_name) | replace('[Report Date]', analysis_date) }}</p>
 </div>
 
 </body>

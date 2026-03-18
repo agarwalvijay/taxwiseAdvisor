@@ -13,6 +13,7 @@ from backend.models.plan import (
     PlanSynthesizerOutput,
     TaxTrajectoryOutput,
     TLHAdvisorOutput,
+    YearlyConversionRow,
 )
 from backend.models.snapshot import ClientFinancialSnapshotSchema
 from backend.reasoning.tax_trajectory import ReasoningStepError
@@ -32,6 +33,33 @@ _IL_STATE_TAX_RATE = 0.0495
 
 # IRS Uniform Lifetime Table factor at age 73
 _RMD_FACTOR_73 = 26.5
+
+# 2026 MFJ federal tax brackets (bracket top → rate) for illustrative table
+_BRACKETS_2026_MFJ = [
+    (23_200, 0.10),
+    (94_300, 0.12),
+    (201_050, 0.22),
+    (383_900, 0.24),
+    (487_450, 0.32),
+    (731_200, 0.35),
+    (float("inf"), 0.37),
+]
+_STANDARD_DEDUCTION_MFJ_2026 = 30_000
+_IRMAA_TIER1_MFJ = 212_000
+
+
+def _calc_federal_tax_mfj_2026(agi: float) -> float:
+    """Approximate 2026 MFJ federal income tax given AGI (after standard deduction)."""
+    taxable = max(0.0, agi - _STANDARD_DEDUCTION_MFJ_2026)
+    tax = 0.0
+    prev = 0.0
+    for bracket_top, rate in _BRACKETS_2026_MFJ:
+        if taxable <= prev:
+            break
+        in_bracket = min(taxable, bracket_top) - prev
+        tax += in_bracket * rate
+        prev = bracket_top
+    return round(tax, 2)
 
 
 class PlanSynthesizer:
@@ -262,5 +290,75 @@ def _post_process(
                 "expected (balance/26.5)=%.2f by more than 10%% — verify RMD calculation",
                 actual_rmd, expected_rmd,
             )
+
+    # Step 6: Fill DoNothingComparison comparison table fields deterministically
+    dnc = result.do_nothing_comparison
+    pretax_without = trajectory.projected_pretax_at_rmd or 0.0
+    total_conv = ct.total_converted or 0.0
+    pretax_with = max(0.0, pretax_without - total_conv)
+    first_rmd_without = round(pretax_without / _RMD_FACTOR_73, 2)
+    first_rmd_with = round(pretax_with / _RMD_FACTOR_73, 2)
+    rmd_rate = trajectory.rmd_bracket_estimate or 0.0
+    # Roth balances
+    accounts = snapshot.accounts
+    current_roth = sum((a.balance or 0) for a in accounts.roth_ira) + sum(
+        (a.balance or 0) for a in accounts.roth_401k
+    )
+    dnc.pretax_at_73_without_plan = round(pretax_without, 2)
+    dnc.pretax_at_73_with_plan = round(pretax_with, 2)
+    dnc.first_rmd_without_plan = first_rmd_without
+    dnc.first_rmd_with_plan = first_rmd_with
+    dnc.annual_rmd_tax_without_plan = round(first_rmd_without * rmd_rate, 2)
+    dnc.annual_rmd_tax_with_plan = round(first_rmd_with * rmd_rate, 2)
+    dnc.roth_at_73_without_plan = round(current_roth, 2)
+    dnc.roth_at_73_with_plan = round(current_roth + total_conv, 2)
+
+    # Step 7: Illustrative conversion table when rows are empty but window years exist
+    if not ct.rows and trajectory.conversion_window_years:
+        is_il = state == "IL"
+        illustrative_rows: list[YearlyConversionRow] = []
+        running = 0.0
+        for yr in sorted(trajectory.conversion_window_years):
+            conv = float(_IRMAA_TIER1_MFJ)
+            fed = _calc_federal_tax_mfj_2026(conv)
+            st_tax = round(conv * _IL_STATE_TAX_RATE, 2) if is_il else 0.0
+            total_t = round(fed + st_tax, 2)
+            eff = round(total_t / conv * 100, 1) if conv > 0 else 0.0
+            running += conv
+            illustrative_rows.append(
+                YearlyConversionRow(
+                    year=yr,
+                    pre_conversion_income=0.0,
+                    convert_amount=conv,
+                    post_conversion_agi=conv,
+                    federal_tax=fed,
+                    state_tax=st_tax,
+                    total_tax=total_t,
+                    effective_rate_pct=eff,
+                    cumulative_converted=round(running, 2),
+                    irmaa_safe=True,
+                    note="Illustrative — assumes $0 other income. Add retirement income projections for personalized amounts.",
+                )
+            )
+        ct.rows = illustrative_rows
+        ct.total_converted = round(running, 2)
+        ct.total_tax_paid = round(sum(r.total_tax for r in illustrative_rows), 2)
+        if ct.total_converted > 0:
+            ct.blended_effective_rate_pct = round(
+                ct.total_tax_paid / ct.total_converted * 100, 1
+            )
+        ct.illustrative = True
+        if is_il and not ct.il_state_tax_note:
+            ct.il_state_tax_note = (
+                "Illinois taxes Roth conversions as ordinary income at 4.95%, "
+                "but future Roth IRA withdrawals are Illinois state-tax-free — "
+                "this asymmetry increases the net lifetime benefit of each conversion."
+            )
+        logger.info(
+            "plan_synthesizer post_process: generated %d illustrative conversion rows "
+            "for window years %s",
+            len(illustrative_rows),
+            trajectory.conversion_window_years,
+        )
 
     return result

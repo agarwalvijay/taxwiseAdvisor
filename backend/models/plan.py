@@ -179,6 +179,15 @@ class DoNothingComparison(BaseModel):
     irmaa_triggered: bool
     estimated_lifetime_tax_savings: float
     narrative: str
+    # Comparison table fields — filled deterministically by _post_process
+    pretax_at_73_without_plan: float = 0.0
+    pretax_at_73_with_plan: float = 0.0
+    first_rmd_without_plan: float = 0.0
+    first_rmd_with_plan: float = 0.0
+    annual_rmd_tax_without_plan: float = 0.0
+    annual_rmd_tax_with_plan: float = 0.0
+    roth_at_73_without_plan: float = 0.0
+    roth_at_73_with_plan: float = 0.0
 
 
 class YearlyConversionRow(BaseModel):
@@ -201,6 +210,7 @@ class ConversionTableSummary(BaseModel):
     total_tax_paid: float
     blended_effective_rate_pct: float
     il_state_tax_note: str
+    illustrative: bool = False
 
 
 class TLHSummary(BaseModel):
@@ -217,6 +227,7 @@ class PriorityAction(BaseModel):
     category: Literal["roth_conversion", "tlh", "asset_location", "other"]
     action: str
     rationale: str
+    consequence: str = ""  # "If you don't act: ..." sentence with dollar amount
     estimated_benefit: str
     urgency: Literal["immediate", "this_year", "multi_year"]
     confidence: Literal["high", "medium", "low"]

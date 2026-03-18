@@ -227,8 +227,15 @@ async def test_report_blocked():
 def test_all_sections_present():
     from jinja2 import Environment, FileSystemLoader
     from pathlib import Path
+    from backend.reports.generator import (
+        _filter_currency, _filter_percentage, _filter_irmaa_safe, _filter_urgency_class
+    )
     templates_dir = Path("backend/reports/templates")
     env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
+    env.filters["currency"] = _filter_currency
+    env.filters["percentage"] = _filter_percentage
+    env.filters["irmaa_safe"] = _filter_irmaa_safe
+    env.filters["urgency_class"] = _filter_urgency_class
     template = env.get_template("report.html")
     html = template.render(
         advisor_name="Jane Advisor",

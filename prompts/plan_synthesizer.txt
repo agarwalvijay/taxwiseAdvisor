@@ -94,6 +94,8 @@ Each action must be SPECIFIC and ACTIONABLE with actual amounts, account names, 
 BAD: "Consider Roth conversion opportunities in low-income years."
 GOOD: "Convert $182,000 from Vanguard Traditional IRA to Roth IRA in 2028, paying approximately $38,877 in combined federal and Illinois state taxes from taxable brokerage funds."
 
+Each action must include a `consequence` field: one sentence starting with "If you don't act: " that states the specific dollar cost or tax penalty of inaction. Example: "If you don't act: the client will pay an estimated $140,000 more in lifetime taxes as pre-tax RMDs are forced at the 24%+ bracket rather than the current 22% conversion rate."
+
 ### CONFIDENCE CLASSIFICATION
 - "high": well-supported by data, straightforward calculation
 - "medium": reasonable estimate with some uncertainty
@@ -147,6 +149,7 @@ Return ONLY valid JSON. No markdown, no preamble, no explanation.
       "category": "roth_conversion",
       "action": "Convert $182,000 from Vanguard Traditional IRA to Roth IRA in 2028, paying approximately $38,877 in combined federal and Illinois state taxes from taxable brokerage funds.",
       "rationale": "With zero earned income in 2028 (early retirement), the client converts at a blended 16.4% effective rate vs. the 24%+ rate that will apply at RMD start age 73. Illinois taxes the conversion at 4.95% now, but future Roth withdrawals will be entirely Illinois state-tax-free.",
+      "consequence": "If you don't act: the client will pay an estimated $140,000 more in lifetime taxes as pre-tax RMDs are forced at the 24%+ bracket beginning at age 73, and IRMAA surcharges will apply to Medicare.",
       "estimated_benefit": "$140,000+ in estimated lifetime tax savings across the full 3-year conversion program",
       "urgency": "immediate",
       "confidence": "high"
@@ -156,6 +159,7 @@ Return ONLY valid JSON. No markdown, no preamble, no explanation.
       "category": "tlh",
       "action": "Sell 45 shares of AMZN and 200 shares of INTC in Fidelity taxable brokerage to harvest $8,447.50 in long-term losses. Purchase XLY and SOXX as replacement securities within 2 days. Wait 31 days before repurchasing AMZN or INTC.",
       "rationale": "These positions are currently at a loss. Harvesting now captures the tax benefit (15% LTCG + 3.8% NIIT) before conditions change, while replacement ETFs maintain similar market exposure without triggering wash-sale rules.",
+      "consequence": "If you don't act: $1,909 in tax savings (LTCG + NIIT) will be forfeited if the positions recover before year-end, and the opportunity to offset future gains will be lost.",
       "estimated_benefit": "$1,588 in immediate tax savings plus $321 in NIIT reduction",
       "urgency": "this_year",
       "confidence": "high"
@@ -165,6 +169,7 @@ Return ONLY valid JSON. No markdown, no preamble, no explanation.
       "category": "asset_location",
       "action": "Gradually shift BND (Vanguard Total Bond ETF) from the taxable Fidelity account to the Traditional IRA or 401(k) as the taxable portfolio is rebalanced.",
       "rationale": "Bond interest is taxed as ordinary income in a taxable account. Moving bonds to tax-deferred retirement accounts reduces ongoing annual tax drag on bond income.",
+      "consequence": "If you don't act: approximately $500–$800/year in bond interest will continue to be taxed at ordinary income rates in the taxable account, compounding to an estimated $8,000–$12,000 over a 15-year horizon.",
       "estimated_benefit": "Estimated $500–$800/year in reduced tax drag on bond income",
       "urgency": "multi_year",
       "confidence": "medium"
@@ -247,6 +252,7 @@ Return ONLY valid JSON. No markdown, no preamble, no explanation.
 Field constraints:
 - priority_actions: must be non-empty; ordered by priority (1 = highest)
 - category: exactly "roth_conversion", "tlh", "asset_location", or "other"
+- consequence: must start with "If you don't act: " and include a specific dollar amount
 - urgency (per action): exactly "immediate", "this_year", or "multi_year"
 - urgency (top-level): exactly "high", "medium", or "low"
 - confidence (per action): exactly "high", "medium", or "low"
