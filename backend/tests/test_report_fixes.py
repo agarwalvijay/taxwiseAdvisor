@@ -208,8 +208,8 @@ def test_illustrative_conversion_table():
         "illustrative": True,
     }
     html = _render(step4)
-    assert "Illustrative Estimates Only" in html, "Illustrative warning banner must render"
-    assert "Add retirement income projections" in html, "CTA to add projections must render"
+    assert "ILLUSTRATIVE PROJECTION" in html, "Illustrative warning banner must render"
+    assert "Add retirement year projections in Step 3" in html, "CTA to add projections must render"
     # Row should be amber-tinted (FFFBEB)
     assert "FFFBEB" in html, "Illustrative rows must use amber background"
 

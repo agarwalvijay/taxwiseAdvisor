@@ -617,7 +617,14 @@
       <h3>Tax Profile</h3>
       <div class="info-row">
         <div class="info-key">Marginal Federal Bracket</div>
-        <div class="info-val">{{ tax_profile.get('current_marginal_bracket') | percentage }}</div>
+        {% set marginal_bracket = step1.get('current_bracket') or tax_profile.get('current_marginal_bracket') %}
+        <div class="info-val">
+          {%- if marginal_bracket -%}
+            {{ marginal_bracket | percentage }}
+          {%- else -%}
+            See tax trajectory analysis
+          {%- endif -%}
+        </div>
       </div>
       <div class="info-row">
         <div class="info-key">LTCG Rate</div>
@@ -853,9 +860,9 @@
 
   {% if ct.get('illustrative', False) %}
   <div class="callout-warning">
-    <strong>Illustrative Estimates Only</strong> — Income projections for the conversion window years were not provided.
-    These amounts assume $0 other income and cap conversions at the IRMAA Tier 1 threshold ($212,000 AGI).
-    <strong>Add retirement income projections in Step 3 to generate personalized conversion amounts.</strong>
+    &#9888; <strong>ILLUSTRATIVE PROJECTION</strong> — assumes $0 retirement income.
+    Amounts capped at the IRMAA Tier 1 threshold ($212,000 AGI).
+    <strong>Add retirement year projections in Step 3 to personalize.</strong>
   </div>
   {% endif %}
 

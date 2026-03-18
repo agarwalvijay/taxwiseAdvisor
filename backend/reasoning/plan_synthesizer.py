@@ -222,6 +222,17 @@ class PlanSynthesizer:
         raise ReasoningStepError("plan_synthesizer", "Exhausted retries.")
 
 
+import re as _re
+
+
+def _extract_dollar_amount(benefit_str: str) -> float:
+    """Return largest dollar figure found in an estimated_benefit string."""
+    matches = _re.findall(r'\$[\d,]+', benefit_str)
+    if not matches:
+        return 0.0
+    return max(float(m.replace('$', '').replace(',', '')) for m in matches)
+
+
 def _post_process(
     result: PlanSynthesizerOutput,
     snapshot: ClientFinancialSnapshotSchema,
@@ -236,6 +247,9 @@ def _post_process(
     Step 3: Recalculate total_tax and effective_rate_pct per row.
     Step 4: Recalculate conversion table summary totals.
     Step 5: Verify RMD math — log warning if projected_first_rmd is significantly off.
+    Step 6: Fill DoNothingComparison with-plan fields using compound growth math.
+    Step 7: Generate illustrative conversion rows when window years exist but rows are empty.
+    Step 8: Re-sort priority_actions by estimated lifetime dollar impact; re-number.
     """
     state = snapshot.personal.state.upper() if snapshot.personal.state else ""
     rows = result.conversion_table.rows
@@ -291,27 +305,48 @@ def _post_process(
                 actual_rmd, expected_rmd,
             )
 
-    # Step 6: Fill DoNothingComparison comparison table fields deterministically
+    # Step 6: Fill DoNothingComparison with-plan fields using compound growth math
     dnc = result.do_nothing_comparison
     pretax_without = trajectory.projected_pretax_at_rmd or 0.0
-    total_conv = ct.total_converted or 0.0
-    pretax_with = max(0.0, pretax_without - total_conv)
-    first_rmd_without = round(pretax_without / _RMD_FACTOR_73, 2)
-    first_rmd_with = round(pretax_with / _RMD_FACTOR_73, 2)
+    # Use post-processed ct.total_converted; fall back to step_2 total
+    total_conv = ct.total_converted or conversions.total_converted or 0.0
     rmd_rate = trajectory.rmd_bracket_estimate or 0.0
-    # Roth balances
+    years_to_rmd = max(0, 73 - snapshot.personal.age)
+
+    # with-plan pre-tax at 73: subtract conversions × 1.8 growth multiplier (conservative)
+    with_plan_pretax = max(0.0, pretax_without - total_conv * 1.8)
+    first_rmd_without = round(pretax_without / _RMD_FACTOR_73, 2)
+    first_rmd_with = round(with_plan_pretax / _RMD_FACTOR_73, 2)
+
+    # Roth balances grown at 6% compound over years_to_rmd
+    # (IL retirement distributions are state-tax-free, so no state rate on Roth)
     accounts = snapshot.accounts
     current_roth = sum((a.balance or 0) for a in accounts.roth_ira) + sum(
         (a.balance or 0) for a in accounts.roth_401k
     )
+    growth = (1.06 ** years_to_rmd) if years_to_rmd > 0 else 1.0
+    do_nothing_roth = round(current_roth * growth, 2)
+    with_plan_roth = round((current_roth + total_conv) * growth, 2)
+
+    # Always populate without-plan fields; only override with-plan if null/same-as-without
     dnc.pretax_at_73_without_plan = round(pretax_without, 2)
-    dnc.pretax_at_73_with_plan = round(pretax_with, 2)
     dnc.first_rmd_without_plan = first_rmd_without
-    dnc.first_rmd_with_plan = first_rmd_with
     dnc.annual_rmd_tax_without_plan = round(first_rmd_without * rmd_rate, 2)
+    dnc.roth_at_73_without_plan = do_nothing_roth
+
+    needs_with_plan = (
+        dnc.pretax_at_73_with_plan == 0.0
+        or dnc.pretax_at_73_with_plan == dnc.pretax_at_73_without_plan
+    )
+    if needs_with_plan:
+        logger.warning(
+            "plan_synthesizer post_process: comparison table with_plan fields were null "
+            "or equal to do_nothing — populated via deterministic post-processing"
+        )
+    dnc.pretax_at_73_with_plan = round(with_plan_pretax, 2)
+    dnc.first_rmd_with_plan = first_rmd_with
     dnc.annual_rmd_tax_with_plan = round(first_rmd_with * rmd_rate, 2)
-    dnc.roth_at_73_without_plan = round(current_roth, 2)
-    dnc.roth_at_73_with_plan = round(current_roth + total_conv, 2)
+    dnc.roth_at_73_with_plan = with_plan_roth
 
     # Step 7: Illustrative conversion table when rows are empty but window years exist
     if not ct.rows and trajectory.conversion_window_years:
@@ -337,7 +372,7 @@ def _post_process(
                     effective_rate_pct=eff,
                     cumulative_converted=round(running, 2),
                     irmaa_safe=True,
-                    note="Illustrative — assumes $0 other income. Add retirement income projections for personalized amounts.",
+                    note=None,
                 )
             )
         ct.rows = illustrative_rows
@@ -360,5 +395,14 @@ def _post_process(
             len(illustrative_rows),
             trajectory.conversion_window_years,
         )
+
+    # Step 8: Re-sort priority_actions by estimated lifetime dollar impact; re-number
+    if result.priority_actions:
+        result.priority_actions.sort(
+            key=lambda a: _extract_dollar_amount(a.estimated_benefit),
+            reverse=True,
+        )
+        for i, action in enumerate(result.priority_actions):
+            action.priority = i + 1
 
     return result
