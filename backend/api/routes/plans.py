@@ -49,6 +49,7 @@ async def get_latest_plan(client_id: uuid.UUID, db: AsyncSession = Depends(get_d
         .join(ClientFinancialSnapshotORM, PlanORM.snapshot_id == ClientFinancialSnapshotORM.id)
         .where(ClientFinancialSnapshotORM.client_id == client_id)
         .order_by(PlanORM.created_at.desc())
+        .limit(1)
     )
     plan = result.scalar_one_or_none()
     if plan is None:

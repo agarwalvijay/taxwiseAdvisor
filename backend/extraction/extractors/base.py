@@ -101,16 +101,44 @@ def call_claude_extract(prompt_path: Path, text: str, max_tokens: int = 2048) ->
 def extract_json_from_response(raw_text: str) -> dict | None:
     """
     Extract the first JSON object from a Claude response string.
-    Claude sometimes wraps JSON in markdown code fences.
+
+    Uses brace-depth tracking rather than a greedy regex so that:
+    - Preamble / trailing text is ignored
+    - Strings containing { or } don't confuse the parser
+    - Truncated JSON (stop_reason=max_tokens) still fails cleanly
     """
-    # Strip markdown code fences if present
-    stripped = re.sub(r"```(?:json)?\s*", "", raw_text).strip()
+    # Strip markdown code fences (opening and closing)
+    stripped = re.sub(r"```(?:json)?\s*", "", raw_text)
+    stripped = re.sub(r"```\s*", "", stripped).strip()
 
-    json_match = re.search(r"\{.*\}", stripped, re.DOTALL)
-    if not json_match:
+    start = stripped.find("{")
+    if start == -1:
         return None
 
-    try:
-        return json.loads(json_match.group())
-    except json.JSONDecodeError:
-        return None
+    depth = 0
+    in_string = False
+    escape_next = False
+
+    for i, ch in enumerate(stripped[start:], start):
+        if escape_next:
+            escape_next = False
+            continue
+        if ch == "\\" and in_string:
+            escape_next = True
+            continue
+        if ch == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(stripped[start : i + 1])
+                except json.JSONDecodeError:
+                    return None
+
+    return None  # No balanced JSON object found (truncated response)

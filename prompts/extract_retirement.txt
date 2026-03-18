@@ -146,10 +146,18 @@ Return ONLY valid JSON. No markdown, no preamble.
     "note": "IRA only; almost never on statement"
   },
   "holdings_summary": {
-    "value": [],
+    "value": [
+      {
+        "symbol": "VOO",
+        "description": "Vanguard S&P 500 ETF",
+        "quantity": 142.345,
+        "market_value": 58210.50,
+        "unrealized_gain_loss": 12300.00
+      }
+    ],
     "confidence": 0.80,
     "inferred": false,
-    "note": "Top holdings if available"
+    "note": "Top holdings if available. Include symbol (or null), description, quantity (shares/units or null), market_value (dollar amount or null), unrealized_gain_loss (dollar amount or null). Extract as many holdings as are listed."
   },
   "extraction_notes": [
     "Consolidated statement for Fidelity Private Client Group covering 8 retirement accounts.",

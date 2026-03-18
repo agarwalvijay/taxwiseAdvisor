@@ -9,7 +9,7 @@ This prompt handles statements from Fidelity, Schwab, Vanguard, Merrill, TD Amer
 3. If a field is NOT present in the document, return `null` for the value — do NOT guess or hallucinate.
 4. Set `inferred: true` if the value was calculated or inferred rather than explicitly stated.
 5. Add a `note` for any ambiguity (e.g., "Period end date", "Sum of 3 accounts combined").
-6. For the `holdings` array, create one entry per security position (stocks, ETFs, mutual funds, bonds).
+6. For the `holdings` array, extract up to the top 25 positions ranked by market value (largest first). If there are more than 25 positions, add an extraction note stating the total number of positions and that the list was truncated. Include stocks, ETFs, mutual funds, and bonds; skip money market / cash sweep positions.
 7. At the end, provide an `extraction_notes` array for document-level observations.
 8. Provide an `overall_confidence` score reflecting overall extraction quality.
 

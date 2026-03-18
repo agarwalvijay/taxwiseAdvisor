@@ -42,7 +42,7 @@ async def _run_extraction(text: str, document_type: str) -> ExtractionResult:
 
     response = await client.messages.create(
         model=_MODEL,
-        max_tokens=2048,
+        max_tokens=4096,  # Consolidated statements with many sub-accounts need more tokens
         messages=[{"role": "user", "content": user_message}],
     )
 
@@ -50,6 +50,13 @@ async def _run_extraction(text: str, document_type: str) -> ExtractionResult:
     data = extract_json_from_response(raw)
 
     if data is None:
+        import logging
+        logging.getLogger(__name__).error(
+            "Retirement extractor: Claude did not return parseable JSON. "
+            "stop_reason=%s raw_preview=%r",
+            response.stop_reason,
+            raw[:500],
+        )
         return ExtractionResult(
             document_type=document_type,
             fields={},

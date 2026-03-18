@@ -327,6 +327,7 @@ async def assemble_client_snapshot(
     gate_status = dict(snapshot_orm.gate_status or {})
     gate_status["snapshot_gate"] = "passed"
     snapshot_orm.gate_status = gate_status
+    flag_modified(snapshot_orm, "gate_status")
     await db.commit()
     await db.refresh(snapshot_orm)
 

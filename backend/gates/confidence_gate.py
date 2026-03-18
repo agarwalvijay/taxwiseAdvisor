@@ -258,8 +258,15 @@ async def can_generate_plan(client_id: str, db: AsyncSession) -> dict:
         }
 
     # Gate 4: Validation gate
+    # "not_started" is acceptable when there's only 1 document (no cross-doc check possible)
     validation_gate = gate_status_raw.get("validation_gate", "not_started")
-    if validation_gate != "passed":
+    classified_docs = [d for d in documents if d.classification_status != "rejected"]
+    if validation_gate == "contradictions_pending":
+        return {
+            "allowed": False,
+            "reason": "Cross-document contradictions must be resolved before generating a plan.",
+        }
+    if validation_gate == "not_started" and len(classified_docs) >= 2:
         return {
             "allowed": False,
             "reason": "Cross-document contradictions must be resolved before generating a plan.",

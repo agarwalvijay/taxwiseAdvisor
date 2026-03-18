@@ -41,7 +41,7 @@ class BrokerageExtractor(BaseExtractor):
 
         response = await client.messages.create(
             model=_MODEL,
-            max_tokens=4096,  # Holdings tables can be large
+            max_tokens=8192,  # Large brokerage holdings tables can exceed 4096
             messages=[{"role": "user", "content": user_message}],
         )
 
@@ -49,6 +49,13 @@ class BrokerageExtractor(BaseExtractor):
         data = extract_json_from_response(raw)
 
         if data is None:
+            import logging
+            logging.getLogger(__name__).error(
+                "Brokerage extractor: Claude did not return parseable JSON. "
+                "stop_reason=%s raw_preview=%r",
+                response.stop_reason,
+                raw[:500],
+            )
             return ExtractionResult(
                 document_type="brokerage_statement",
                 fields={},

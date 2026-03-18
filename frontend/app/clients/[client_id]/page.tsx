@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import Header from '@/components/Header'
 import GateReview from '@/components/GateReview'
+import ExtractionDetails from '@/components/ExtractionDetails'
 import ClientProfile from '@/components/ClientProfile'
 import IncomeTable from '@/components/IncomeTable'
 import PlanStatus from '@/components/PlanStatus'
@@ -403,6 +404,9 @@ export default function ClientWorkspacePage({ params }: ClientPageProps) {
                   onConfirmField={handleConfirmField}
                   onResolveContradiction={handleResolveContradiction}
                 />
+
+                <ExtractionDetails documents={documents} />
+
                 <Button
                   disabled={
                     assembling ||
@@ -499,9 +503,17 @@ export default function ClientWorkspacePage({ params }: ClientPageProps) {
                       </div>
                     </div>
 
-                    <Button onClick={() => setCurrentStep(5)} className="bg-[#1F4E79] hover:bg-[#1a4068] text-white">
-                      Next: Download Report →
-                    </Button>
+                    <div className="flex gap-3">
+                      <Button onClick={() => setCurrentStep(5)} className="bg-[#1F4E79] hover:bg-[#1a4068] text-white">
+                        Next: Download Report →
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => { setPlan(null); handleGeneratePlan() }}
+                      >
+                        Regenerate Plan
+                      </Button>
+                    </div>
                   </div>
                 )}
 
