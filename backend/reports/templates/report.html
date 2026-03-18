@@ -392,7 +392,7 @@
     <p>{{ step4.get('executive_summary', '') | default('') }}</p>
   </div>
 
-  {% set confidence = step4.get('plan_confidence', 0) %}
+  {% set confidence = step4.get('plan_confidence') or 0 %}
   {% if confidence %}
   <p class="small-gray">Overall plan confidence: <strong>{{ (confidence * 100) | round(0) | int }}%</strong></p>
   {% endif %}
@@ -532,16 +532,16 @@
       <h3>Tax Profile</h3>
       <div class="info-row">
         <div class="info-key">Marginal Federal Bracket</div>
-        <div class="info-val">{{ (tax_profile.get('current_marginal_bracket', 0) * 100) | round(0) | int }}%</div>
+        <div class="info-val">{{ ((tax_profile.get('current_marginal_bracket') or 0) * 100) | round(0) | int }}%</div>
       </div>
       <div class="info-row">
         <div class="info-key">LTCG Rate</div>
-        <div class="info-val">{{ (tax_profile.get('ltcg_rate', 0) * 100) | round(0) | int }}%</div>
+        <div class="info-val">{{ ((tax_profile.get('ltcg_rate') or 0) * 100) | round(0) | int }}%</div>
       </div>
       {% if tax_profile.get('state_income_tax_rate') is not none %}
       <div class="info-row">
         <div class="info-key">State Income Tax Rate</div>
-        <div class="info-val">{{ (tax_profile.get('state_income_tax_rate', 0) * 100) | round(2) }}%</div>
+        <div class="info-val">{{ ((tax_profile.get('state_income_tax_rate') or 0) * 100) | round(2) }}%</div>
       </div>
       {% endif %}
       <div class="info-row">
@@ -551,7 +551,7 @@
       {% if tax_profile.get('irmaa_buffer') is not none and not tax_profile.get('irmaa_exposure') %}
       <div class="info-row">
         <div class="info-key">IRMAA Buffer</div>
-        <div class="info-val">${{ "{:,.0f}".format(tax_profile.get('irmaa_buffer', 0)) }}</div>
+        <div class="info-val">${{ "{:,.0f}".format((tax_profile.get('irmaa_buffer') or 0)) }}</div>
       </div>
       {% endif %}
       <div class="info-row">
@@ -697,17 +697,17 @@
   <div class="bracket-flow">
     <div class="bracket-item">
       <div class="bracket-label">Current Bracket</div>
-      <div class="bracket-value">{{ (step1.get('current_bracket', 0) * 100) | round(0) | int }}%</div>
+      <div class="bracket-value">{{ ((step1.get('current_bracket') or 0) * 100) | round(0) | int }}%</div>
     </div>
     <div class="bracket-arrow">&rarr;</div>
     <div class="bracket-item">
       <div class="bracket-label">Retirement Estimate</div>
-      <div class="bracket-value">{{ (step1.get('retirement_bracket_estimate', 0) * 100) | round(0) | int }}%</div>
+      <div class="bracket-value">{{ ((step1.get('retirement_bracket_estimate') or 0) * 100) | round(0) | int }}%</div>
     </div>
     <div class="bracket-arrow">&rarr;</div>
     <div class="bracket-item">
       <div class="bracket-label">RMD Bracket Estimate</div>
-      <div class="bracket-value">{{ (step1.get('rmd_bracket_estimate', 0) * 100) | round(0) | int }}%</div>
+      <div class="bracket-value">{{ ((step1.get('rmd_bracket_estimate') or 0) * 100) | round(0) | int }}%</div>
     </div>
   </div>
 
@@ -730,11 +730,11 @@
       </tr>
       <tr>
         <td>Projected First RMD</td>
-        <td class="text-right">${{ "{:,.0f}".format(step1.get('projected_first_rmd', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((step1.get('projected_first_rmd') or 0)) }}</td>
       </tr>
       <tr>
         <td>Projected Pre-Tax Balance at RMD</td>
-        <td class="text-right">${{ "{:,.0f}".format(step1.get('projected_pretax_at_rmd', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((step1.get('projected_pretax_at_rmd') or 0)) }}</td>
       </tr>
       <tr>
         <td>Social Security Taxation Risk</td>
@@ -770,19 +770,19 @@
   <div class="kpi-grid" style="margin-bottom:20px;">
     <div class="kpi-card highlight">
       <div class="kpi-label">Total to Convert</div>
-      <div class="kpi-value">${{ "{:,.0f}".format(step2.get('total_converted', 0)) }}</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((step2.get('total_converted') or 0)) }}</div>
       <div class="kpi-sub">Over {{ conversion_plan | length }} year(s)</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Est. Tax Cost</div>
-      <div class="kpi-value">${{ "{:,.0f}".format(step2.get('estimated_total_tax_on_conversions', 0)) }}</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((step2.get('estimated_total_tax_on_conversions') or 0)) }}</div>
       <div class="kpi-sub">Federal + State</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Effective Tax Rate</div>
       <div class="kpi-value">
-        {% set total = step2.get('total_converted', 0) %}
-        {% set tax = step2.get('estimated_total_tax_on_conversions', 0) %}
+        {% set total = step2.get('total_converted') or 0 %}
+        {% set tax = step2.get('estimated_total_tax_on_conversions') or 0 %}
         {% if total > 0 %}{{ "{:.1f}".format(tax / total * 100) }}%{% else %}N/A{% endif %}
       </div>
       <div class="kpi-sub">On conversions</div>
@@ -810,18 +810,18 @@
       {% for row in conversion_plan %}
       <tr>
         <td>{{ row.get('year', '') }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(row.get('convert_amount', 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(row.get('estimated_federal_tax', 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(row.get('estimated_state_tax', 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(row.get('post_conversion_agi', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('convert_amount') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('estimated_federal_tax') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('estimated_state_tax') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((row.get('post_conversion_agi') or 0)) }}</td>
         <td class="text-center">{{ "✓" if row.get('irmaa_safe', False) else "✗" }}</td>
         <td>{{ row.get('net_benefit_note', '') | default('') }}</td>
       </tr>
       {% endfor %}
       <tr class="total-row">
         <td><strong>Total</strong></td>
-        <td class="text-right">${{ "{:,.0f}".format(step2.get('total_converted', 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(step2.get('estimated_total_tax_on_conversions', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((step2.get('total_converted') or 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((step2.get('estimated_total_tax_on_conversions') or 0)) }}</td>
         <td class="text-right">—</td>
         <td class="text-right">—</td>
         <td class="text-center">—</td>
@@ -860,12 +860,12 @@
   <div class="kpi-grid" style="margin-bottom:18px;">
     <div class="kpi-card highlight">
       <div class="kpi-label">Total Harvestable Losses</div>
-      <div class="kpi-value">${{ "{:,.0f}".format(step3.get('total_harvestable_losses', 0)) }}</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((step3.get('total_harvestable_losses') or 0)) }}</div>
       <div class="kpi-sub">{{ opportunities | length }} position(s)</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Est. Tax Benefit</div>
-      <div class="kpi-value">${{ "{:,.0f}".format(step3.get('estimated_total_tax_benefit', 0)) }}</div>
+      <div class="kpi-value">${{ "{:,.0f}".format((step3.get('estimated_total_tax_benefit') or 0)) }}</div>
       <div class="kpi-sub">Net savings</div>
     </div>
   </div>
@@ -888,12 +888,12 @@
       <tr>
         <td><strong>{{ opp.get('symbol', '') }}</strong></td>
         <td>{{ opp.get('description', '') }}</td>
-        <td class="text-right">${{ "{:,.0f}".format(opp.get('unrealized_loss', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format((opp.get('unrealized_loss') or 0)) }}</td>
         <td>{{ opp.get('holding_period', '') | replace('_', ' ') | title }}</td>
         <td>{{ opp.get('action', '') }}</td>
         <td>{{ opp.get('suggested_replacement', '') }}</td>
         <td>{{ opp.get('wash_sale_risk', '') | title }}</td>
-        <td class="text-right">${{ "{:,.2f}".format(opp.get('estimated_tax_benefit', 0)) }}</td>
+        <td class="text-right">${{ "{:,.2f}".format((opp.get('estimated_tax_benefit') or 0)) }}</td>
       </tr>
       {% endfor %}
     </tbody>
