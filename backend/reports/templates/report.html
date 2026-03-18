@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TaxWise Advisor — {{ client_name }}</title>
+  <style>
+    /* ===== Page setup ===== */
+    @page {
+      size: letter;
+      margin: 1in 0.9in 0.9in 0.9in;
+      @bottom-center {
+        content: "TaxWise Advisor  |  Page " counter(page) " of " counter(pages);
+        font-size: 9pt;
+        color: #888888;
+        font-family: Arial, sans-serif;
+      }
+    }
+
+    /* ===== Base ===== */
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      color: #222222;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 { font-size: 22pt; color: #1F4E79; margin-bottom: 4px; }
+
+    h2 {
+      font-size: 14pt;
+      color: #1F4E79;
+      border-bottom: 2px solid #1F4E79;
+      padding-bottom: 4px;
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+
+    h3 { font-size: 11pt; color: #1F4E79; margin-bottom: 8px; }
+
+    p { margin: 0 0 10px 0; }
+
+    /* ===== Sections ===== */
+    .section {
+      page-break-before: always;
+      padding-top: 10px;
+    }
+
+    /* ===== Cover ===== */
+    #cover { text-align: center; padding-top: 100px; }
+
+    .cover-confidential {
+      display: inline-block;
+      background-color: #1F4E79;
+      color: #ffffff;
+      font-size: 9pt;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 16px;
+      border-radius: 3px;
+      margin-bottom: 40px;
+    }
+
+    .cover-title { font-size: 28pt; color: #1F4E79; font-weight: bold; margin-bottom: 6px; }
+    .cover-subtitle { font-size: 14pt; color: #555555; margin-bottom: 50px; }
+
+    .cover-meta { font-size: 11pt; color: #333333; line-height: 2; }
+
+    .cover-divider {
+      border: none;
+      border-top: 2px solid #1F4E79;
+      width: 60%;
+      margin: 36px auto;
+    }
+
+    /* ===== KPI Stat Cards ===== */
+    .kpi-grid {
+      display: table;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 22px;
+    }
+
+    .kpi-card {
+      display: table-cell;
+      background: #EBF3FB;
+      border: 1px solid #c0d6ea;
+      border-radius: 4px;
+      padding: 14px 12px 12px 12px;
+      text-align: center;
+      vertical-align: top;
+    }
+
+    .kpi-card + .kpi-card { border-left: none; }
+
+    .kpi-label {
+      font-size: 8pt;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 5px;
+    }
+
+    .kpi-value {
+      font-size: 17pt;
+      font-weight: bold;
+      color: #1F4E79;
+      line-height: 1.1;
+    }
+
+    .kpi-sub {
+      font-size: 8pt;
+      color: #888;
+      margin-top: 3px;
+    }
+
+    .kpi-card.highlight {
+      background: #1F4E79;
+    }
+    .kpi-card.highlight .kpi-label,
+    .kpi-card.highlight .kpi-sub { color: #a8c4de; }
+    .kpi-card.highlight .kpi-value { color: #ffffff; }
+
+    /* ===== Allocation bar ===== */
+    .alloc-bar-wrap { margin-bottom: 8px; }
+    .alloc-bar {
+      display: table;
+      width: 100%;
+      height: 22px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .alloc-seg {
+      display: table-cell;
+      height: 22px;
+      vertical-align: middle;
+      text-align: center;
+      font-size: 7.5pt;
+      color: #fff;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .alloc-seg.pretax  { background: #1F4E79; }
+    .alloc-seg.roth    { background: #2E86AB; }
+    .alloc-seg.taxable { background: #6CB4E4; }
+    .alloc-seg.hsa     { background: #16A34A; }
+
+    .alloc-legend {
+      display: table;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .alloc-legend-item {
+      display: table-cell;
+      text-align: center;
+      font-size: 8.5pt;
+      color: #444;
+      vertical-align: top;
+    }
+    .alloc-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    /* ===== Tables ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10pt;
+      margin-bottom: 16px;
+    }
+
+    th {
+      background-color: #1F4E79;
+      color: #ffffff;
+      text-align: left;
+      padding: 7px 10px;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #dddddd;
+      page-break-inside: avoid;
+    }
+
+    tr:nth-child(even) td { background-color: #f0f4f8; }
+    tr:nth-child(odd)  td { background-color: #ffffff; }
+
+    .total-row td {
+      background-color: #dce8f5 !important;
+      font-weight: bold;
+      border-top: 2px solid #1F4E79;
+    }
+
+    /* ===== Callout boxes ===== */
+    .callout {
+      background-color: #EBF3FB;
+      border-left: 4px solid #1F4E79;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      border-radius: 2px;
+    }
+
+    .callout-warning {
+      background-color: #FFF3CD;
+      border-left: 4px solid #D97706;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      border-radius: 2px;
+    }
+
+    .callout-success {
+      background-color: #ECFDF5;
+      border-left: 4px solid #16A34A;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      border-radius: 2px;
+    }
+
+    /* ===== Two-column info grid ===== */
+    .info-grid {
+      display: table;
+      width: 100%;
+      margin-bottom: 18px;
+      border-collapse: collapse;
+    }
+    .info-col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      padding-right: 16px;
+    }
+    .info-col:last-child { padding-right: 0; }
+
+    .info-row {
+      display: table;
+      width: 100%;
+      border-bottom: 1px solid #e8edf3;
+      padding: 5px 0;
+    }
+    .info-key {
+      display: table-cell;
+      font-size: 9pt;
+      color: #666;
+      width: 55%;
+    }
+    .info-val {
+      display: table-cell;
+      font-size: 9.5pt;
+      font-weight: bold;
+      color: #1F4E79;
+      text-align: right;
+    }
+
+    /* ===== Bracket flow ===== */
+    .bracket-flow {
+      display: table;
+      width: 100%;
+      margin-bottom: 18px;
+    }
+
+    .bracket-item {
+      display: table-cell;
+      text-align: center;
+      background-color: #EBF3FB;
+      border: 1px solid #c0d6ea;
+      padding: 14px 8px;
+      vertical-align: middle;
+    }
+
+    .bracket-arrow {
+      display: table-cell;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 18pt;
+      color: #1F4E79;
+      padding: 0 6px;
+      width: 30px;
+    }
+
+    .bracket-label {
+      font-size: 8pt;
+      color: #666666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .bracket-value {
+      font-size: 16pt;
+      font-weight: bold;
+      color: #1F4E79;
+    }
+
+    /* ===== Action plan urgency ===== */
+    .urgency-immediate  { color: #DC2626; font-weight: bold; }
+    .urgency-this_year  { color: #D97706; font-weight: bold; }
+    .urgency-multi_year { color: #16A34A; font-weight: bold; }
+
+    /* ===== Disclaimer ===== */
+    .disclaimer-text { font-size: 8.5pt; color: #888888; line-height: 1.6; }
+
+    /* ===== Lists ===== */
+    ul, ol { margin: 0 0 12px 0; padding-left: 20px; }
+    li { margin-bottom: 5px; }
+
+    /* ===== Utility ===== */
+    .no-break      { page-break-inside: avoid; }
+    .text-right    { text-align: right; }
+    .text-center   { text-align: center; }
+    .small-gray    { font-size: 9pt; color: #888888; }
+    .bold          { font-weight: bold; }
+    .section-intro { font-size: 10pt; color: #444; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- ===== 1. COVER ===== -->
+{# Pre-compute portfolio totals for use across sections #}
+{% set accounts = snapshot.get('accounts', {}) %}
+{% set tax_profile = snapshot.get('tax_profile', {}) %}
+{% set personal = snapshot.get('personal', {}) %}
+{% set income = snapshot.get('income', {}) %}
+{% set rmd_profile = snapshot.get('rmd_profile', {}) %}
+
+{% set ns = namespace(pretax=0, roth=0, taxable=0, hsa=0) %}
+{% for a in accounts.get('traditional_ira', []) + accounts.get('traditional_401k', []) %}
+  {% set ns.pretax = ns.pretax + (a.get('balance') or 0) %}
+{% endfor %}
+{% for a in accounts.get('roth_ira', []) + accounts.get('roth_401k', []) %}
+  {% set ns.roth = ns.roth + (a.get('balance') or 0) %}
+{% endfor %}
+{% for a in accounts.get('taxable_brokerage', []) %}
+  {% set ns.taxable = ns.taxable + (a.get('total_value') or a.get('balance') or 0) %}
+{% endfor %}
+{% for a in accounts.get('hsa', []) %}
+  {% set ns.hsa = ns.hsa + (a.get('balance') or 0) %}
+{% endfor %}
+{% set grand_total = ns.pretax + ns.roth + ns.taxable + ns.hsa %}
+
+<div id="cover">
+  <div class="cover-confidential">Confidential</div>
+  <div class="cover-title">Tax Optimization Report</div>
+  <div class="cover-subtitle">Personalized Planning Analysis</div>
+  <hr class="cover-divider" />
+  <div class="cover-meta">
+    <div><strong>Prepared for:</strong> {{ client_name }}</div>
+    <div><strong>Prepared by:</strong> {{ advisor_name }}</div>
+    <div><strong>Analysis Date:</strong> {{ analysis_date }}</div>
+  </div>
+
+  {% if grand_total > 0 %}
+  <hr class="cover-divider" />
+  <div style="text-align:left; max-width:380px; margin:0 auto;">
+    <div class="kpi-grid">
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Portfolio</div>
+        <div class="kpi-value">${{ "{:,.0f}".format(grand_total) }}</div>
+        <div class="kpi-sub">All accounts</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Pre-Tax</div>
+        <div class="kpi-value">${{ "{:,.0f}".format(ns.pretax) }}</div>
+        <div class="kpi-sub">IRA / 401(k)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Roth</div>
+        <div class="kpi-value">${{ "{:,.0f}".format(ns.roth) }}</div>
+        <div class="kpi-sub">Tax-free</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="small-gray" style="margin-top: 20px;">
+    TaxWise Advisor &mdash; Confidential Client Document
+  </div>
+</div>
+
+<!-- ===== 2. EXECUTIVE SUMMARY ===== -->
+<div id="executive-summary" class="section">
+  <h2>Executive Summary</h2>
+  <div class="callout">
+    <p>{{ step4.get('executive_summary', '') | default('') }}</p>
+  </div>
+
+  {% set confidence = step4.get('plan_confidence', 0) %}
+  {% if confidence %}
+  <p class="small-gray">Overall plan confidence: <strong>{{ (confidence * 100) | round(0) | int }}%</strong></p>
+  {% endif %}
+
+  {# Key findings bullets from priority actions #}
+  {% set actions = step4.get('priority_actions', []) %}
+  {% if actions %}
+  <h3>Key Findings &amp; Priorities</h3>
+  <ul>
+    {% for action in actions[:5] %}
+    <li>
+      <strong>{{ action.get('action', '') }}</strong>
+      {% if action.get('estimated_benefit', '') %}
+       — <span class="small-gray">{{ action.get('estimated_benefit', '') }}</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+<!-- ===== 3. FINANCIAL SNAPSHOT ===== -->
+<div id="financial-snapshot" class="section">
+  <h2>Financial Snapshot</h2>
+
+  <!-- KPI Row -->
+  {% if grand_total > 0 %}
+  <div class="kpi-grid">
+    <div class="kpi-card highlight">
+      <div class="kpi-label">Total Portfolio</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(grand_total) }}</div>
+      <div class="kpi-sub">All accounts</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Pre-Tax Retirement</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(ns.pretax) }}</div>
+      <div class="kpi-sub">{{ "{:.0f}".format(ns.pretax / grand_total * 100) }}% of portfolio</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Roth (Tax-Free)</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(ns.roth) }}</div>
+      <div class="kpi-sub">{{ "{:.0f}".format(ns.roth / grand_total * 100) }}% of portfolio</div>
+    </div>
+    {% if ns.taxable > 0 %}
+    <div class="kpi-card">
+      <div class="kpi-label">Taxable Brokerage</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(ns.taxable) }}</div>
+      <div class="kpi-sub">{{ "{:.0f}".format(ns.taxable / grand_total * 100) }}% of portfolio</div>
+    </div>
+    {% endif %}
+    {% if ns.hsa > 0 %}
+    <div class="kpi-card">
+      <div class="kpi-label">HSA</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(ns.hsa) }}</div>
+      <div class="kpi-sub">{{ "{:.0f}".format(ns.hsa / grand_total * 100) }}% of portfolio</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Allocation Bar -->
+  {% if grand_total > 0 %}
+  <div class="alloc-bar-wrap">
+    <div class="alloc-bar">
+      {% if ns.pretax > 0 %}
+      <div class="alloc-seg pretax" style="width:{{ "{:.1f}".format(ns.pretax / grand_total * 100) }}%">
+        {% if ns.pretax / grand_total > 0.1 %}Pre-Tax{% endif %}
+      </div>
+      {% endif %}
+      {% if ns.roth > 0 %}
+      <div class="alloc-seg roth" style="width:{{ "{:.1f}".format(ns.roth / grand_total * 100) }}%">
+        {% if ns.roth / grand_total > 0.08 %}Roth{% endif %}
+      </div>
+      {% endif %}
+      {% if ns.taxable > 0 %}
+      <div class="alloc-seg taxable" style="width:{{ "{:.1f}".format(ns.taxable / grand_total * 100) }}%">
+        {% if ns.taxable / grand_total > 0.08 %}Taxable{% endif %}
+      </div>
+      {% endif %}
+      {% if ns.hsa > 0 %}
+      <div class="alloc-seg hsa" style="width:{{ "{:.1f}".format(ns.hsa / grand_total * 100) }}%">
+        {% if ns.hsa / grand_total > 0.05 %}HSA{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="alloc-legend">
+      {% if ns.pretax > 0 %}
+      <div class="alloc-legend-item">
+        <span class="alloc-dot" style="background:#1F4E79;"></span>Pre-Tax
+      </div>
+      {% endif %}
+      {% if ns.roth > 0 %}
+      <div class="alloc-legend-item">
+        <span class="alloc-dot" style="background:#2E86AB;"></span>Roth
+      </div>
+      {% endif %}
+      {% if ns.taxable > 0 %}
+      <div class="alloc-legend-item">
+        <span class="alloc-dot" style="background:#6CB4E4;"></span>Taxable
+      </div>
+      {% endif %}
+      {% if ns.hsa > 0 %}
+      <div class="alloc-legend-item">
+        <span class="alloc-dot" style="background:#16A34A;"></span>HSA
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- Two-column personal / tax profile -->
+  <div class="info-grid">
+    <div class="info-col">
+      <h3>Client Profile</h3>
+      <div class="info-row">
+        <div class="info-key">Age</div>
+        <div class="info-val">{{ personal.get('age', 'N/A') }}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">Filing Status</div>
+        <div class="info-val">{{ personal.get('filing_status', 'N/A') | replace('_', ' ') | title }}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">State</div>
+        <div class="info-val">{{ personal.get('state', 'N/A') }}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">Retirement Target Age</div>
+        <div class="info-val">{{ personal.get('retirement_target_age', 'N/A') }}</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">Current Year AGI</div>
+        <div class="info-val">${{ "{:,.0f}".format(income.get('current_year_agi') or 0) }}</div>
+      </div>
+    </div>
+    <div class="info-col">
+      <h3>Tax Profile</h3>
+      <div class="info-row">
+        <div class="info-key">Marginal Federal Bracket</div>
+        <div class="info-val">{{ (tax_profile.get('current_marginal_bracket', 0) * 100) | round(0) | int }}%</div>
+      </div>
+      <div class="info-row">
+        <div class="info-key">LTCG Rate</div>
+        <div class="info-val">{{ (tax_profile.get('ltcg_rate', 0) * 100) | round(0) | int }}%</div>
+      </div>
+      {% if tax_profile.get('state_income_tax_rate') is not none %}
+      <div class="info-row">
+        <div class="info-key">State Income Tax Rate</div>
+        <div class="info-val">{{ (tax_profile.get('state_income_tax_rate', 0) * 100) | round(2) }}%</div>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <div class="info-key">IRMAA Exposure</div>
+        <div class="info-val">{{ "Yes" if tax_profile.get('irmaa_exposure') else "No" }}</div>
+      </div>
+      {% if tax_profile.get('irmaa_buffer') is not none and not tax_profile.get('irmaa_exposure') %}
+      <div class="info-row">
+        <div class="info-key">IRMAA Buffer</div>
+        <div class="info-val">${{ "{:,.0f}".format(tax_profile.get('irmaa_buffer', 0)) }}</div>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <div class="info-key">Years Until RMD</div>
+        <div class="info-val">{{ rmd_profile.get('years_until_rmd', step1.get('years_until_rmd', 'N/A')) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Balances Table -->
+  <h3>Account Balances</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Account Type</th>
+        <th>Institution</th>
+        <th class="text-right">Balance</th>
+        <th class="text-right">% of Portfolio</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for acct in accounts.get('traditional_401k', []) %}
+      <tr>
+        <td>Traditional 401(k)</td>
+        <td>{{ acct.get('institution', 'N/A') | title }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(acct.get('balance') or 0) }}</td>
+        <td class="text-right">{% if grand_total > 0 %}{{ "{:.1f}".format((acct.get('balance') or 0) / grand_total * 100) }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% for acct in accounts.get('traditional_ira', []) %}
+      <tr>
+        <td>Traditional / Rollover IRA</td>
+        <td>{{ acct.get('institution', 'N/A') | title }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(acct.get('balance') or 0) }}</td>
+        <td class="text-right">{% if grand_total > 0 %}{{ "{:.1f}".format((acct.get('balance') or 0) / grand_total * 100) }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% for acct in accounts.get('roth_401k', []) %}
+      <tr>
+        <td>Roth 401(k)</td>
+        <td>{{ acct.get('institution', 'N/A') | title }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(acct.get('balance') or 0) }}</td>
+        <td class="text-right">{% if grand_total > 0 %}{{ "{:.1f}".format((acct.get('balance') or 0) / grand_total * 100) }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% for acct in accounts.get('roth_ira', []) %}
+      <tr>
+        <td>Roth IRA</td>
+        <td>{{ acct.get('institution', 'N/A') | title }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(acct.get('balance') or 0) }}</td>
+        <td class="text-right">{% if grand_total > 0 %}{{ "{:.1f}".format((acct.get('balance') or 0) / grand_total * 100) }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% for acct in accounts.get('taxable_brokerage', []) %}
+      <tr>
+        <td>Taxable Brokerage</td>
+        <td>{{ acct.get('institution', 'N/A') | title }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(acct.get('total_value') or acct.get('balance') or 0) }}</td>
+        <td class="text-right">{% if grand_total > 0 %}{{ "{:.1f}".format((acct.get('total_value') or acct.get('balance') or 0) / grand_total * 100) }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% for acct in accounts.get('hsa', []) %}
+      <tr>
+        <td>HSA</td>
+        <td>{{ acct.get('institution', 'N/A') | title }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(acct.get('balance') or 0) }}</td>
+        <td class="text-right">{% if grand_total > 0 %}{{ "{:.1f}".format((acct.get('balance') or 0) / grand_total * 100) }}%{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+      {% if grand_total > 0 %}
+      <tr class="total-row">
+        <td colspan="2">Total Portfolio</td>
+        <td class="text-right">${{ "{:,.0f}".format(grand_total) }}</td>
+        <td class="text-right">100%</td>
+      </tr>
+      {% endif %}
+      {% if not accounts %}
+      <tr>
+        <td colspan="4" class="text-center small-gray">No account data available.</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <!-- Income Projections -->
+  {% set projections = income.get('projections', []) %}
+  {% if projections %}
+  <h3>Income Projections</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th class="text-right">Estimated Income</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in projections %}
+      <tr>
+        <td>{{ p.get('year', '') }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(p.get('estimated_income') or 0) }}</td>
+        <td>{{ p.get('notes', '') or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- Social Security -->
+  {% set ss = income.get('social_security', {}) %}
+  {% if ss and (ss.get('start_age') or ss.get('monthly_benefit_estimate')) %}
+  <div class="callout">
+    <strong>Social Security:</strong>
+    {% if ss.get('start_age') %}Start age <strong>{{ ss.get('start_age') }}</strong>{% endif %}
+    {% if ss.get('monthly_benefit_estimate') %} &mdash; estimated monthly benefit <strong>${{ "{:,.0f}".format(ss.get('monthly_benefit_estimate')) }}</strong>{% endif %}
+  </div>
+  {% endif %}
+
+  <!-- IRMAA / NIIT callouts -->
+  {% if tax_profile.get('irmaa_exposure') %}
+  <div class="callout-warning">
+    <strong>IRMAA Exposure:</strong> Current AGI exceeds the IRMAA threshold. Medicare Part B &amp; D surcharges apply. Conversion amounts must be sized carefully to avoid stepping into higher tiers.
+  </div>
+  {% elif tax_profile.get('irmaa_buffer') and tax_profile.get('irmaa_buffer') < 30000 %}
+  <div class="callout-warning">
+    <strong>IRMAA Proximity Alert:</strong> AGI is within ${{ "{:,.0f}".format(tax_profile.get('irmaa_buffer')) }} of the IRMAA threshold. Any Roth conversion will need to account for this buffer.
+  </div>
+  {% endif %}
+
+  {% if tax_profile.get('niit_exposure') %}
+  <div class="callout-warning">
+    <strong>Net Investment Income Tax (NIIT):</strong> AGI exceeds the NIIT threshold of ${{ "{:,.0f}".format(tax_profile.get('niit_threshold_mfj', 250000)) }} (MFJ). A 3.8% surtax applies to net investment income.
+  </div>
+  {% endif %}
+</div>
+
+<!-- ===== 4. TAX TRAJECTORY ===== -->
+<div id="tax-trajectory" class="section">
+  <h2>Tax Trajectory Analysis</h2>
+  <p class="section-intro">The following analysis models how the client's tax situation is likely to evolve from today through retirement and into required minimum distribution years.</p>
+
+  <!-- Bracket Flow -->
+  <div class="bracket-flow">
+    <div class="bracket-item">
+      <div class="bracket-label">Current Bracket</div>
+      <div class="bracket-value">{{ (step1.get('current_bracket', 0) * 100) | round(0) | int }}%</div>
+    </div>
+    <div class="bracket-arrow">&rarr;</div>
+    <div class="bracket-item">
+      <div class="bracket-label">Retirement Estimate</div>
+      <div class="bracket-value">{{ (step1.get('retirement_bracket_estimate', 0) * 100) | round(0) | int }}%</div>
+    </div>
+    <div class="bracket-arrow">&rarr;</div>
+    <div class="bracket-item">
+      <div class="bracket-label">RMD Bracket Estimate</div>
+      <div class="bracket-value">{{ (step1.get('rmd_bracket_estimate', 0) * 100) | round(0) | int }}%</div>
+    </div>
+  </div>
+
+  {% set irmaa = step1.get('irmaa_risk', {}) %}
+  {% if irmaa.get('flagged', False) %}
+  <div class="callout-warning">
+    <strong>IRMAA Risk Warning (Tier {{ irmaa.get('tier_at_risk', '?') }}):</strong><br/>
+    {{ irmaa.get('reason', '') }}
+  </div>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr><th>Metric</th><th class="text-right">Value</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Years Until RMD</td>
+        <td class="text-right">{{ step1.get('years_until_rmd', 'N/A') }}</td>
+      </tr>
+      <tr>
+        <td>Projected First RMD</td>
+        <td class="text-right">${{ "{:,.0f}".format(step1.get('projected_first_rmd', 0)) }}</td>
+      </tr>
+      <tr>
+        <td>Projected Pre-Tax Balance at RMD</td>
+        <td class="text-right">${{ "{:,.0f}".format(step1.get('projected_pretax_at_rmd', 0)) }}</td>
+      </tr>
+      <tr>
+        <td>Social Security Taxation Risk</td>
+        <td class="text-right">{{ "Yes" if step1.get('ss_taxation_risk', False) else "No" }}</td>
+      </tr>
+      <tr>
+        <td>Urgency</td>
+        <td class="text-right">{{ step1.get('urgency', 'N/A') | title }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% set window_years = step1.get('conversion_window_years', []) %}
+  {% if window_years %}
+  <h3>Conversion Window Years</h3>
+  <p>{{ window_years | join(', ') }}</p>
+  <p>{{ step1.get('conversion_window_rationale', '') }}</p>
+  {% endif %}
+
+  {% if step1.get('narrative', '') %}
+  <p><em>{{ step1.get('narrative', '') }}</em></p>
+  {% endif %}
+</div>
+
+<!-- ===== 5. ROTH CONVERSION ===== -->
+<div id="roth-conversion" class="section">
+  <h2>Roth Conversion Strategy</h2>
+
+  {% set conversion_plan = step2.get('conversion_plan', []) %}
+  {% if conversion_plan %}
+
+  <!-- KPI summary for conversions -->
+  <div class="kpi-grid" style="margin-bottom:20px;">
+    <div class="kpi-card highlight">
+      <div class="kpi-label">Total to Convert</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(step2.get('total_converted', 0)) }}</div>
+      <div class="kpi-sub">Over {{ conversion_plan | length }} year(s)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Est. Tax Cost</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(step2.get('estimated_total_tax_on_conversions', 0)) }}</div>
+      <div class="kpi-sub">Federal + State</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Effective Tax Rate</div>
+      <div class="kpi-value">
+        {% set total = step2.get('total_converted', 0) %}
+        {% set tax = step2.get('estimated_total_tax_on_conversions', 0) %}
+        {% if total > 0 %}{{ "{:.1f}".format(tax / total * 100) }}%{% else %}N/A{% endif %}
+      </div>
+      <div class="kpi-sub">On conversions</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Liquidity Check</div>
+      <div class="kpi-value">{{ "Pass" if step2.get('liquidity_check_passed', False) else "Fail" }}</div>
+      <div class="kpi-sub">Sufficient cash</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th class="text-right">Convert Amount</th>
+        <th class="text-right">Est. Federal Tax</th>
+        <th class="text-right">Est. State Tax</th>
+        <th class="text-right">Post-Conv. AGI</th>
+        <th class="text-center">IRMAA Safe</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in conversion_plan %}
+      <tr>
+        <td>{{ row.get('year', '') }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(row.get('convert_amount', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(row.get('estimated_federal_tax', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(row.get('estimated_state_tax', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(row.get('post_conversion_agi', 0)) }}</td>
+        <td class="text-center">{{ "✓" if row.get('irmaa_safe', False) else "✗" }}</td>
+        <td>{{ row.get('net_benefit_note', '') | default('') }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row">
+        <td><strong>Total</strong></td>
+        <td class="text-right">${{ "{:,.0f}".format(step2.get('total_converted', 0)) }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(step2.get('estimated_total_tax_on_conversions', 0)) }}</td>
+        <td class="text-right">—</td>
+        <td class="text-right">—</td>
+        <td class="text-center">—</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+  {% else %}
+  <p class="small-gray">No Roth conversion data available.</p>
+  {% endif %}
+
+  {% if step2.get('state_tax_note', '') %}
+  <div class="callout">
+    <strong>State Tax Note:</strong> {{ step2.get('state_tax_note', '') }}
+  </div>
+  {% endif %}
+
+  {% if step2.get('narrative', '') %}
+  <p>{{ step2.get('narrative', '') }}</p>
+  {% endif %}
+</div>
+
+<!-- ===== 6. TAX-LOSS HARVESTING ===== -->
+<div id="tax-loss-harvesting" class="section">
+  <h2>Tax-Loss Harvesting Opportunities</h2>
+
+  {% if not step3.get('tlh_section_complete', False) or step3.get('tlh_unavailable_reason') %}
+  <div class="callout">
+    <strong>Not Available:</strong> {{ step3.get('tlh_unavailable_reason', 'Tax-loss harvesting analysis is not available for this client.') }}
+  </div>
+  {% else %}
+
+  {% set opportunities = step3.get('tlh_opportunities', []) %}
+  {% if opportunities %}
+
+  <div class="kpi-grid" style="margin-bottom:18px;">
+    <div class="kpi-card highlight">
+      <div class="kpi-label">Total Harvestable Losses</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(step3.get('total_harvestable_losses', 0)) }}</div>
+      <div class="kpi-sub">{{ opportunities | length }} position(s)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Est. Tax Benefit</div>
+      <div class="kpi-value">${{ "{:,.0f}".format(step3.get('estimated_total_tax_benefit', 0)) }}</div>
+      <div class="kpi-sub">Net savings</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Description</th>
+        <th class="text-right">Unrealized Loss</th>
+        <th>Holding Period</th>
+        <th>Action</th>
+        <th>Replacement</th>
+        <th>Wash Sale Risk</th>
+        <th class="text-right">Est. Tax Benefit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for opp in opportunities %}
+      <tr>
+        <td><strong>{{ opp.get('symbol', '') }}</strong></td>
+        <td>{{ opp.get('description', '') }}</td>
+        <td class="text-right">${{ "{:,.0f}".format(opp.get('unrealized_loss', 0)) }}</td>
+        <td>{{ opp.get('holding_period', '') | replace('_', ' ') | title }}</td>
+        <td>{{ opp.get('action', '') }}</td>
+        <td>{{ opp.get('suggested_replacement', '') }}</td>
+        <td>{{ opp.get('wash_sale_risk', '') | title }}</td>
+        <td class="text-right">${{ "{:,.2f}".format(opp.get('estimated_tax_benefit', 0)) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="small-gray">No tax-loss harvesting opportunities identified at this time.</p>
+  {% endif %}
+
+  {% set asset_moves = step3.get('asset_location_moves', []) %}
+  {% if asset_moves %}
+  <h3>Asset Location Recommendations</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>Current Location</th>
+        <th>Recommended Location</th>
+        <th>Rationale</th>
+        <th>Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for move in asset_moves %}
+      <tr>
+        <td>{{ move.get('asset_description', '') }}</td>
+        <td>{{ move.get('current_location', '') }}</td>
+        <td>{{ move.get('recommended_location', '') }}</td>
+        <td>{{ move.get('rationale', '') }}</td>
+        <td>{{ move.get('priority', '') | title }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if step3.get('narrative', '') %}
+  <p>{{ step3.get('narrative', '') }}</p>
+  {% endif %}
+
+  {% endif %}
+</div>
+
+<!-- ===== 7. ACTION PLAN ===== -->
+<div id="action-plan" class="section">
+  <h2>Prioritized Action Plan</h2>
+
+  {% set actions = step4.get('priority_actions', []) %}
+  {% if actions %}
+  <ol>
+    {% for action in actions %}
+    <li class="no-break" style="margin-bottom: 14px;">
+      <div>
+        <strong>{{ action.get('action', '') }}</strong>
+        <span class="urgency-{{ action.get('urgency', '') }}">&nbsp;[{{ action.get('urgency', '') | replace('_', ' ') | upper }}]</span>
+      </div>
+      <div style="margin-top: 4px;">{{ action.get('rationale', '') }}</div>
+      {% if action.get('estimated_benefit', '') %}
+      <div style="margin-top: 4px;" class="small-gray"><em>{{ action.get('estimated_benefit', '') }}</em></div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="small-gray">No priority actions identified.</p>
+  {% endif %}
+</div>
+
+<!-- ===== 8. KEY ASSUMPTIONS ===== -->
+<div id="key-assumptions" class="section">
+  <h2>Key Assumptions</h2>
+
+  {% set assumptions = step4.get('key_assumptions', []) %}
+  {% if assumptions %}
+  <ul>
+    {% for assumption in assumptions %}
+    <li>{{ assumption }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="small-gray">No key assumptions recorded.</p>
+  {% endif %}
+
+  {% set data_gaps = step4.get('data_gaps_affecting_plan', []) %}
+  {% if data_gaps %}
+  <h3>Data Gaps Affecting This Plan</h3>
+  <ul>
+    {% for gap in data_gaps %}
+    <li>{{ gap }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+<!-- ===== 9. DISCLAIMER ===== -->
+<div id="disclaimer" class="section">
+  <h2>Disclaimer</h2>
+  <p class="disclaimer-text">{{ step4.get('disclaimer', '') | default('This analysis is for informational purposes only and does not constitute financial, tax, or legal advice. Please consult a qualified professional before implementing any strategy.') }}</p>
+</div>
+
+</body>
+</html>

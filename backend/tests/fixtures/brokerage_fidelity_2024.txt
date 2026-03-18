@@ -1,0 +1,77 @@
+FIDELITY INVESTMENTS
+Account Statement
+Period: October 1, 2024 – December 31, 2024
+
+Account Name: James & Sarah Mitchell Joint Account
+Account Number: XXXX-XXXX-7842
+Account Type: Brokerage (Taxable)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PORTFOLIO SUMMARY AS OF DECEMBER 31, 2024
+
+Total Account Value:              $487,250.00
+  Core/Cash (SPAXX):               $12,400.00
+  Total Securities Value:          $474,850.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOLDINGS
+
+Description                          Symbol    Shares     Price      Market Value    Cost Basis     Unrealized G/L    Hold Period
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Vanguard Total Stock Market ETF      VTI       142.500    $245.10    $34,927.00      $28,400.00     +$6,527.00        Long Term
+iShares Core S&P 500 ETF             IVV       210.000    $487.25    $102,322.50     $89,600.00     +$12,722.50       Long Term
+Vanguard Total Intl Stock ETF        VXUS      315.000    $ 58.40    $ 18,396.00     $15,200.00     +$3,196.00        Long Term
+Apple Inc                            AAPL      125.000    $192.53    $ 24,066.25     $18,750.00     +$5,316.25        Long Term
+Microsoft Corporation                MSFT       80.000    $374.39    $ 29,951.20     $22,400.00     +$7,551.20        Long Term
+Amazon.com Inc                       AMZN      100.000    $218.45    $ 21,845.00     $19,500.00     +$2,345.00        Short Term
+Vanguard Total Bond Market ETF       BND      1800.000    $ 73.22    $131,796.00    $138,400.00     -$6,604.00        Long Term
+Vanguard REIT ETF                    VNQ       420.000    $119.75    $ 50,295.00     $48,200.00     +$2,095.00        Long Term
+Palo Alto Networks Inc               PANW       75.000    $168.55    $ 12,641.25     $10,500.00     +$2,141.25        Short Term
+Fidelity Core Cash (SPAXX)                                           $ 12,400.00         N/A            N/A
+
+                                                    ────────────────────────────────────────
+TOTAL SECURITIES                                         $474,850.00    $390,950.00    +$34,290.20
+TOTAL (Including Cash)                                   $487,250.00
+
+NOTE: Cost basis shown is average cost method. Short-term positions held ≤ 12 months.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INCOME SUMMARY — YEAR TO DATE 2024
+
+Dividends
+  Qualified Dividends:              $7,842.00
+  Ordinary (Non-Qualified):           $558.00
+  Total Dividends:                  $8,400.00
+
+Interest
+  Taxable Interest (SPAXX):         $1,240.00
+  Total Interest:                   $1,240.00
+
+Capital Gains Distributions:            $0.00
+
+Realized Gains / Losses (YTD)
+  Short-Term Gains/(Losses):        $3,200.00
+  Long-Term Gains/(Losses):         $9,300.00
+  Total Net Realized:              $12,500.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACCOUNT ACTIVITY — Q4 2024
+
+Dividends Received:                $2,104.00
+Interest Received:                   $312.00
+Securities Purchased:             ($15,000.00)
+Securities Sold:                   $22,500.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT DISCLOSURES
+Cost basis information is provided as a courtesy. Fidelity is not responsible for the accuracy
+of cost basis information provided by issuers or other sources. Please review for accuracy and
+contact Fidelity if you believe there are any errors.
+
+Statement generated: January 15, 2025
+Fidelity Investments | P.O. Box 770001 | Cincinnati, OH 45277-0045

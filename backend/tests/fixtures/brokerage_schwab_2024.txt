@@ -1,0 +1,66 @@
+Charles Schwab & Co., Inc.
+Investment Account Statement
+Statement Period: January 1, 2024 through December 31, 2024
+
+Client: James Mitchell
+Account Number: ••••-1923
+Account Type: Individual Brokerage Account
+
+───────────────────────────────────────────────────────────────────────────────
+
+ACCOUNT OVERVIEW
+
+Account Value as of 12/31/2024
+  Total Value:               $124,380.00
+
+  Cash & Cash Equivalents:    $3,280.00
+    Schwab Value Advantage    $3,280.00
+  Investments:              $121,100.00
+
+───────────────────────────────────────────────────────────────────────────────
+
+HOLDINGS DETAIL
+
+                                                                    Est. Annual
+Symbol  Description              Qty      Price    Market Value  Cost Basis  Unrealized G/L  Income   G/L%   Term
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+SCHB    Schwab US Broad Market   412.00   $59.25   $24,411.00   $18,900.00    +$5,511.00    $348      +29%   LT
+VOO     Vanguard S&P 500 ETF      45.00  $540.12   $24,305.40   $20,100.00    +$4,205.40    $490      +21%   LT
+SCHA    Schwab US Small-Cap       98.00   $53.80    $5,272.40    $4,100.00    +$1,172.40    $72       +29%   LT
+GLD     SPDR Gold Shares          30.00  $229.85    $6,895.50    $7,200.00      -$304.50     $0        -4%   ST
+VCSH    Vanguard ST Corp Bond    210.00   $76.48   $16,060.80   $16,500.00      -$439.20    $580      -3%   LT
+VGIT    Vanguard Int-Term Govt   185.00   $55.90   $10,341.50   $11,200.00      -$858.50    $420      -8%   LT
+Cash    Schwab Value Advantage         $3,280.00    $3,280.00         N/A           N/A     $148      N/A   N/A
+              ─────────────────────────────────────────────────────────────────────────────────────────
+Totals                                           $90,286.60   $78,000.00   +$10,286.60   $2,058
+
+Note: Market value total includes cash. Total investments = $87,006.60. Includes accrued interest.
+
+───────────────────────────────────────────────────────────────────────────────
+
+INCOME & DISTRIBUTIONS — YEAR-TO-DATE 2024
+
+DIVIDENDS
+  Qualified Dividends                     $1,852.00
+  Ordinary Dividends                        $206.00
+  TOTAL DIVIDENDS                         $2,058.00
+
+INTEREST
+  Taxable Interest (Cash)                   $148.00
+  TOTAL INTEREST                            $148.00
+
+REALIZED GAINS / LOSSES YTD
+  Short-term realized gains/(losses)       ($412.00)
+  Long-term realized gains/(losses)       $1,850.00
+  NET REALIZED                            $1,438.00
+
+───────────────────────────────────────────────────────────────────────────────
+
+1099 TAX INFORMATION SUMMARY (Preliminary — subject to revision)
+
+This statement is provided as a supplement to your official Schwab tax forms.
+Official 1099 forms will be mailed by February 15, 2025.
+
+For questions, contact Schwab at 1-800-435-4000
+Charles Schwab & Co., Inc. | 211 Main Street | San Francisco, CA 94105
+Member SIPC | Member NYSE | Registered Investment Advisor

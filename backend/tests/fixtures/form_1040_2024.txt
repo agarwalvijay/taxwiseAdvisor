@@ -1,0 +1,103 @@
+Department of the Treasury—Internal Revenue Service
+Form 1040 U.S. Individual Income Tax Return 2024
+OMB No. 1545-0074 IRS Use Only—Do not write or staple in this space.
+
+Filing Status
+[X] Married filing jointly
+
+Your first name and middle initial    Last name                       Your social security number
+James                                 Mitchell                        XXX-XX-1234
+If joint return, spouse's first name  Last name                       Spouse's SSN
+Sarah                                 Mitchell                        XXX-XX-5678
+
+Home address (number and street)                                      Apt. no.
+4512 Oak Ridge Drive
+
+City, town, or post office                      State   ZIP code
+Springfield                                     IL      62701
+
+Digital Assets: At any time during 2024, did you receive, sell, exchange, or otherwise
+dispose of any digital asset (such as cryptocurrency)? [ ] Yes [X] No
+
+Standard Deduction: Someone can claim you as a dependent [ ] You [ ] Spouse
+Age/Blindness: [ ] You were born before January 2, 1960    Spouse [  ]
+
+Dependents
+(1) John Mitchell          SSN: XXX-XX-9012   Relationship: Son      Child tax credit [X]
+(2) Emily Mitchell         SSN: XXX-XX-3456   Relationship: Daughter Child tax credit [X]
+
+Income
+1a  Total amount from Form(s) W-2, box 1 .  .  .  .  .  .  .  .  .  .  .  1a    185,000.00
+1b  Household employee wages not reported on Form(s) W-2  .  .  .  .  .  1b
+1c  Tip income not reported on Form(s) W-2  .  .  .  .  .  .  .  .  .  .  1c
+1d  Medicaid waiver payments not reported on Form(s) W-2  .  .  .  .  .  1d
+1e  Taxable dependent care benefits from Form 2441, line 26  .  .  .  .  1e
+1f  Employer adoption benefits from Form 8839, line 29  .  .  .  .  .  .  1f
+1g  Wages from Form 8919, line 6  .  .  .  .  .  .  .  .  .  .  .  .  .  1g
+1h  Other earned income  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  1h
+1z  Add lines 1a through 1h  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  1z    185,000.00
+
+2a  Tax-exempt interest  .  .  .  .  . 2a           0.00     2b  Taxable interest  .  1,240.00
+3a  Qualified dividends  .  .  .  .  . 3a       8,400.00     3b  Ordinary dividends  9,100.00
+4a  IRA distributions  .  .  .  .  .  4a                     4b  Taxable amount  .  .
+5a  Pensions and annuities  .  .  .  . 5a                     5b  Taxable amount  .  .
+6a  Social security benefits  .  .  .  6a                     6b  Taxable amount  .  .
+7   Capital gain or (loss). Attach Schedule D if required. If not required, check here [  ]  7    12,500.00
+8   Additional income from Schedule 1, line 10  .  .  .  .  .  .  .  .  .  8
+9   Total income. Add lines 1z, 2b, 3b, 4b, 5b, 6b, 7, and 8  .  .  .  .  9   207,840.00
+
+10  Adjustments to income from Schedule 1, line 26  .  .  .  .  .  .  .  . 10
+11  Adjusted gross income. Subtract line 10 from line 9  .  .  .  .  .  .  11  207,840.00
+
+Standard Deduction or Itemized Deductions (from Schedule A)
+12a Your standard deduction (see left margin)  .  .  .  .  .  .  .  .  .  12a   29,200.00
+12b Charitable contributions if you take the standard deduction (see instructions)  12b
+12c Add lines 12a and 12b  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  12c   29,200.00
+13  Qualified business income deduction from Form 8995 or Form 8995-A  .  .  13
+14  Add lines 12c and 13  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  14   29,200.00
+15  Taxable income. Subtract line 14 from line 11. If zero or less, enter -0-  15  178,640.00
+
+Tax and Credits
+16  Tax (see instructions). Check if any from Form(s): [ ] 8814 [ ] 4972  16   30,467.00
+17  Alternative minimum tax (AMT) from Form 6251  .  .  .  .  .  .  .  .  17
+18  Add Schedule 2, line 3  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  18
+19  Child tax credit or credit for other dependents from Schedule 8812  .  19    4,000.00
+20  Add Schedule 3, line 8  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  20
+21  Add lines 19 and 20  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  21    4,000.00
+22  Subtract line 21 from line 18. If zero or less, enter -0-  .  .  .  .  22   26,467.00
+23  Other taxes, including self-employment tax, from Schedule 2, line 21  .  23
+24  Total tax. Add lines 22 and 23  .  .  .  .  .  .  .  .  .  .  .  .  .  24   26,467.00
+
+Payments
+25a Federal income tax withheld from Forms W-2 and 1099  .  .  .  .  .  .  25a  28,000.00
+25b 2024 estimated tax payments and amount applied from 2023 return  .  .  25b
+25c Earned income credit (EIC)  .  .  .  .  .  .  .  .  .  .  .  .  .  .  25c
+26  Additional child tax credit from Schedule 8812  .  .  .  .  .  .  .  .  26
+27  American opportunity credit from Form 8863, line 8  .  .  .  .  .  .  . 27
+28  Reserved for future use  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  28
+29  Reserved for future use  .  .  .  .  .  .  .  .  .  .  .  .  .  .  .  29
+30  Other payments or refundable credits from Schedule 3, line 15  .  .  .  30
+31  Add lines 25a through 30. These are your total payments  .  .  .  .  .  31   28,000.00
+
+Refund / Amount You Owe
+32  If line 31 is more than line 24, subtract line 24 from line 31. This is your refund  32    1,533.00
+35a Amount of line 32 you want refunded to you  .  .  .  .  .  .  .  .  .  35a   1,533.00
+37  Amount you owe. Subtract line 31 from line 24  .  .  .  .  .  .  .  .  37
+
+Third Party Designee
+Do you want to allow another person to discuss this return with the IRS?  [X] No
+
+Sign Here
+Under penalties of perjury, I declare that I have examined this return and accompanying schedules
+and statements, and to the best of my knowledge and belief, they are true, correct, and complete.
+
+Your signature: /s/ James Mitchell          Date: 04/12/2025     Occupation: Software Engineer
+Spouse's signature: /s/ Sarah Mitchell      Date: 04/12/2025     Occupation: Marketing Director
+
+Paid Preparer Use Only
+Preparer's name: Robert Chen, CPA
+Firm's name: Chen & Associates Tax Services
+Firm's address: 100 Main Street, Springfield, IL 62701
+PTIN: P12345678
+EIN: 12-3456789
+Phone: (217) 555-0100

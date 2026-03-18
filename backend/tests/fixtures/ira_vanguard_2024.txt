@@ -1,0 +1,75 @@
+Vanguard
+Your Account Statement
+October 1, 2024 – December 31, 2024
+
+Account Holder: James Mitchell
+Account Name: Vanguard Traditional IRA
+Account Number: XXXX-XXXX-4421
+Account Type: Traditional Individual Retirement Account
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACCOUNT SUMMARY
+
+Beginning balance (10/01/2024):          $203,480.00
++ Contributions this quarter:               $0.00
++ Earnings/Gains this quarter:           $12,082.00
+- Distributions this quarter:                $0.00
+- Fees this quarter:                         $0.00
+Ending balance (12/31/2024):            $215,000.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+YEAR-TO-DATE SUMMARY (January 1 – December 31, 2024)
+
+Contributions YTD:                         $7,000.00
+  Employee/Owner contributions:            $7,000.00
+  Employer contributions:                     $0.00
+
+Distributions YTD:                             $0.00
+
+Net Investment Gain/(Loss) YTD:           $24,500.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HOLDINGS AS OF DECEMBER 31, 2024
+
+Fund Name                           Shares      Price     Balance       Allocation
+─────────────────────────────────────────────────────────────────────────────────
+Vanguard Total Stock Mkt Idx Adm    1,842.341   $116.72   $215,000.00   100.0%
+(VTSAX)
+
+Total                                                      $215,000.00   100.0%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT INFORMATION
+
+Account Type: Traditional IRA
+Tax Year 2024 Contribution Limit: $7,000 ($8,000 if age 50 or older)
+Your 2024 Contributions: $7,000.00 (as of 12/31/2024)
+
+Nondeductible Contribution Basis: Not tracked by Vanguard.
+If you have made nondeductible contributions to this IRA, please refer to
+IRS Form 8606 from your tax records for your basis information.
+
+Required Minimum Distributions: You have not reached RMD age.
+Your current RMD start age under SECURE 2.0: Age 73.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TRANSACTION HISTORY — Q4 2024
+
+Date        Description                             Amount
+─────────────────────────────────────────────────────────
+10/15/2024  Dividend Reinvestment — VTSAX          $842.14
+11/15/2024  Dividend Reinvestment — VTSAX          $850.22
+12/16/2024  Dividend Reinvestment — VTSAX          $881.05
+12/31/2024  Market Value Adjustment               +$9,508.59
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This statement is for informational purposes only and is not a tax document.
+Distributions from Traditional IRAs are generally taxable as ordinary income.
+Vanguard Marketing Corporation, Distributor of the Vanguard Funds
+P.O. Box 2600 | Valley Forge, PA 19482-2600

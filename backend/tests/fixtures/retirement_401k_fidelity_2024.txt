@@ -1,0 +1,87 @@
+Fidelity NetBenefits®
+Retirement Account Statement
+Statement Period: January 1, 2024 – December 31, 2024
+
+Participant Name:    James Mitchell
+Employer:            Acme Corporation
+Plan Name:           Acme Corp 401(k) Retirement Savings Plan
+Plan Type:           401(k) Plan
+Account Number:      XXXX-XXXX-3317
+Vesting Schedule:    4-Year Graded (25% per year)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACCOUNT SUMMARY
+
+                            Beginning Balance      Ending Balance
+                            (01/01/2024)           (12/31/2024)
+─────────────────────────────────────────────────────────────────
+Pre-Tax 401(k)              $771,840.00            $842,000.00
+Roth 401(k)                       $0.00                  $0.00
+After-Tax (Non-Roth)              $0.00                  $0.00
+─────────────────────────────────────────────────────────────────
+TOTAL ACCOUNT VALUE         $771,840.00            $842,000.00
+
+Vested Balance (as of 12/31/2024):                 $798,000.00
+  (You are 94.78% vested — see vesting schedule for details)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONTRIBUTIONS YEAR-TO-DATE 2024
+
+Employee Pre-Tax Contributions:         $23,000.00
+Employee Roth Contributions:                 $0.00
+Employer Match:                          $9,200.00
+  (Acme matches 50% of first 8% of compensation)
+Profit Sharing:                              $0.00
+─────────────────────────────────────────────────────────────────
+TOTAL CONTRIBUTIONS YTD:                $32,200.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INVESTMENT ALLOCATION AS OF DECEMBER 31, 2024
+
+Fund Name                                   Ticker    Allocation    Balance
+─────────────────────────────────────────────────────────────────────────────
+Fidelity 500 Index Fund                     FXAIX     60.0%         $505,200.00
+Fidelity U.S. Bond Index Fund               FXNAX     25.0%         $210,500.00
+Fidelity Total Market Index Fund            FSKAX     10.0%          $84,200.00
+Fidelity International Index Fund          FSPSX      5.0%           $42,100.00
+─────────────────────────────────────────────────────────────────────────────
+Total                                                 100.0%         $842,000.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACCOUNT ACTIVITY — 2024
+
+01/15  Employee Contribution                        +$958.33
+01/15  Employer Match                               +$383.33
+...    (bi-weekly contributions throughout year)
+12/31  Dividends Reinvested (FXAIX)              +$3,150.00
+12/31  Dividends Reinvested (FXNAX)                +$840.00
+12/31  Net Investment Gain                       +$34,760.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DISTRIBUTIONS / WITHDRAWALS YTD:                     $0.00
+LOANS OUTSTANDING:                                   $0.00
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT NOTICES
+
+This account is a Traditional (pre-tax) 401(k). Contributions are made on a
+pre-tax basis and reduce your current taxable income. Withdrawals in retirement
+are subject to ordinary income tax.
+
+Roth 401(k): Your plan offers a Roth 401(k) option. You currently have no
+balance in the Roth sub-account.
+
+SECURE 2.0 Update: Required Minimum Distributions for Roth 401(k) accounts
+have been eliminated effective 2024. If you roll your 401(k) to a Roth IRA,
+no RMDs will be required during your lifetime.
+
+For information about your plan: Acme Corp Benefits — HR Portal
+For account questions: Fidelity NetBenefits 1-800-835-5097
+
+Statement generated: January 20, 2025
