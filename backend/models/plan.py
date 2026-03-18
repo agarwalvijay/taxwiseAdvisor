@@ -9,7 +9,7 @@ from typing import Literal, Optional
 from sqlalchemy import String, ForeignKey, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from backend.database import Base
 
@@ -142,10 +142,18 @@ class TLHAdvisorOutput(BaseModel):
 
 
 class DataGap(BaseModel):
-    field: str
+    field: str = ""
     description: str
-    plan_impact: str
-    severity: Literal["high", "medium", "low"]
+    plan_impact: str = ""
+    severity: Literal["high", "medium", "low"] = "medium"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize(cls, data: dict) -> dict:
+        # Claude sometimes returns "category" instead of "field"
+        if isinstance(data, dict) and not data.get("field") and data.get("category"):
+            data = {**data, "field": data["category"]}
+        return data
 
 
 class ClientSnapshotSummary(BaseModel):
