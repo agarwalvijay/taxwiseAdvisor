@@ -1,4 +1,5 @@
 """Step 2: Roth Conversion Optimizer."""
+import datetime
 import json
 import logging
 import time
@@ -8,13 +9,57 @@ import anthropic
 
 from backend.config import settings
 from backend.extraction.extractors.base import extract_json_from_response
-from backend.models.plan import ConversionOptimizerOutput, TaxTrajectoryOutput
+from backend.models.plan import ConversionOptimizerOutput, TaxTrajectoryOutput, YearlyConversion
 from backend.models.snapshot import ClientFinancialSnapshotSchema
 from backend.reasoning.tax_trajectory import ReasoningStepError
 
 logger = logging.getLogger(__name__)
 
 _PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "conversion_optimizer.txt"
+
+
+def _project_balance(current_balance: float, years: int, annual_growth_rate: float = 0.06) -> float:
+    """Compound a balance forward at a fixed annual growth rate. Always deterministic."""
+    return round(current_balance * ((1 + annual_growth_rate) ** years), 2)
+
+
+def _ensure_window_complete(
+    result: ConversionOptimizerOutput,
+    window_years: list[int],
+) -> ConversionOptimizerOutput:
+    """Add $0 placeholder rows for any conversion window years missing from conversion_plan."""
+    if not window_years:
+        return result
+    covered = {entry.year for entry in result.conversion_plan}
+    missing = sorted(set(window_years) - covered)
+    for yr in missing:
+        result.conversion_plan.append(
+            YearlyConversion(
+                year=yr,
+                convert_amount=0.0,
+                estimated_federal_tax=0.0,
+                estimated_state_tax=0.0,
+                bracket_used="no conversion planned",
+                post_conversion_agi=0.0,
+                irmaa_safe=True,
+                aca_safe=True,
+                net_benefit_note=(
+                    "Conversion amount not modeled — Social Security start age and benefit "
+                    "unknown for this year. Provide SS data to generate a personalized "
+                    "conversion amount for this year."
+                ),
+            )
+        )
+    if missing:
+        result.conversion_plan.sort(key=lambda e: e.year)
+        logger.info(
+            "conversion_optimizer _ensure_window_complete: added %d placeholder rows for years %s",
+            len(missing),
+            missing,
+        )
+    return result
+
+
 _MODEL = "claude-sonnet-4-5"
 _SYSTEM = (
     "You are a tax analysis engine for a financial planning software tool. "
@@ -45,6 +90,13 @@ class ConversionOptimizer:
             (a.total_value or 0) for a in accounts.taxable_brokerage
         )
 
+        # Pre-calculate conversion window and balance projection (Fix 2 + Fix 4)
+        current_year = datetime.date.today().year
+        retirement_year = current_year + (personal.retirement_target_age - personal.age)
+        rmd_start_year = current_year + (73 - personal.age)
+        window_years = list(range(retirement_year, rmd_start_year))
+        projected_pretax_at_rmd = _project_balance(pretax_balance, 73 - personal.age)
+
         input_slice = {
             "filing_status": personal.filing_status,
             "state": personal.state,
@@ -58,16 +110,34 @@ class ConversionOptimizer:
             "niit_exposure": tax_profile.niit_exposure if tax_profile else False,
             "current_agi": income.current_year_agi,
             "tax_trajectory": trajectory.model_dump(),
+            "conversion_window_years": window_years,
+            "retirement_year": retirement_year,
+            "rmd_start_year": rmd_start_year,
+            "projected_pretax_at_rmd": projected_pretax_at_rmd,
         }
 
         prompt_template = _PROMPT_PATH.read_text()
+        window_instruction = (
+            f"\n\n## MANDATORY CONVERSION WINDOW\n\n"
+            f"The client's conversion window runs from {retirement_year} through {rmd_start_year - 1} "
+            f"({len(window_years)} years). You MUST include a conversion_plan entry for EVERY year: "
+            f"{', '.join(str(y) for y in window_years)}. "
+            f"Set convert_amount=0.0 for any year where conversion is not recommended.\n\n"
+            f"## HARD CAP — TOTAL CONVERSION LIMIT\n\n"
+            f"The total_pretax_balance available to convert is ${pretax_balance:,.2f}. "
+            f"The SUM of all convert_amount values across ALL years MUST NOT exceed ${pretax_balance:,.2f}. "
+            f"total_converted in your output must equal exactly sum(convert_amounts) and be ≤ ${pretax_balance:,.2f}.\n"
+        )
         user_message = (
-            f"{prompt_template}\n\n"
+            f"{prompt_template}{window_instruction}\n\n"
             f"<input_data>\n{json.dumps(input_slice, indent=2)}\n</input_data>\n\n"
             "Output valid JSON matching the schema exactly."
         )
 
         result = await self._call_with_retry(user_message)
+
+        # Deterministic window completeness check (Fix 2)
+        result = _ensure_window_complete(result, window_years)
 
         # Post-processing assertions
         for entry in result.conversion_plan:
@@ -78,19 +148,44 @@ class ConversionOptimizer:
                 )
 
         if result.total_converted > pretax_balance:
-            raise ReasoningStepError(
-                "conversion_optimizer",
-                f"total_converted ({result.total_converted}) exceeds pretax_balance ({pretax_balance}). "
-                "Cannot convert more than is available.",
+            # Deterministic correction: scale every conversion down proportionally so
+            # total_converted ≤ pretax_balance. Preserves year ordering and tax ratios.
+            scale = pretax_balance / result.total_converted
+            for entry in result.conversion_plan:
+                entry.convert_amount = round(entry.convert_amount * scale, 2)
+                entry.estimated_federal_tax = round(entry.estimated_federal_tax * scale, 2)
+                entry.estimated_state_tax = round(entry.estimated_state_tax * scale, 2)
+            result.total_converted = round(
+                sum(e.convert_amount for e in result.conversion_plan), 2
+            )
+            result.estimated_total_tax_on_conversions = round(
+                sum(e.estimated_federal_tax + e.estimated_state_tax for e in result.conversion_plan),
+                2,
+            )
+            logger.warning(
+                "conversion_optimizer: total_converted exceeded pretax_balance (%.2f > %.2f); "
+                "scaled down by factor %.4f to %.2f",
+                result.total_converted / scale,
+                pretax_balance,
+                scale,
+                result.total_converted,
             )
 
         if result.liquidity_check_passed:
             if result.estimated_total_tax_on_conversions > taxable_brokerage_total:
-                raise ReasoningStepError(
-                    "conversion_optimizer",
-                    f"liquidity_check_passed=True but estimated_total_tax_on_conversions "
-                    f"({result.estimated_total_tax_on_conversions}) exceeds taxable_brokerage_total "
-                    f"({taxable_brokerage_total}).",
+                # Flip the flag rather than failing the plan — the plan synthesizer will
+                # surface this as a data gap / liquidity constraint in its narrative.
+                result.liquidity_check_passed = False
+                result.liquidity_note = (
+                    (result.liquidity_note or "") +
+                    f" Liquidity flag corrected: estimated tax ({result.estimated_total_tax_on_conversions:,.0f}) "
+                    f"exceeds taxable brokerage ({taxable_brokerage_total:,.0f})."
+                ).strip()
+                logger.warning(
+                    "conversion_optimizer: liquidity_check_passed=True but tax %.2f > brokerage %.2f; "
+                    "overriding to False",
+                    result.estimated_total_tax_on_conversions,
+                    taxable_brokerage_total,
                 )
 
         return result
@@ -103,7 +198,7 @@ class ConversionOptimizer:
             try:
                 response = await client.messages.create(
                     model=_MODEL,
-                    max_tokens=3000,
+                    max_tokens=6000,
                     system=_SYSTEM,
                     messages=[{"role": "user", "content": user_message}],
                 )

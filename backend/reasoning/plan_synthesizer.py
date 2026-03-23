@@ -1,6 +1,7 @@
 """Step 4: Plan Synthesizer."""
 import json
 import logging
+import re as _re
 import time
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from backend.config import settings
 from backend.extraction.extractors.base import extract_json_from_response
 from backend.models.plan import (
     ConversionOptimizerOutput,
+    PriorityAction,
     PlanSynthesizerOutput,
     TaxTrajectoryOutput,
     TLHAdvisorOutput,
@@ -46,6 +48,74 @@ _BRACKETS_2026_MFJ = [
 ]
 _STANDARD_DEDUCTION_MFJ_2026 = 30_000
 _IRMAA_TIER1_MFJ = 212_000
+_IRMAA_ANNUAL_COST_MFJ = 1_776  # Part B + Part D combined MFJ annual surcharge (Tier 1)
+
+
+def _project_balance(current_balance: float, years: int, annual_growth_rate: float = 0.06) -> float:
+    """Compound a balance forward at a fixed annual growth rate. Always deterministic."""
+    return round(current_balance * ((1 + annual_growth_rate) ** years), 2)
+
+
+# Keywords that indicate a data-collection request masquerading as a priority action
+DATA_COLLECTION_KEYWORDS = [
+    "gather", "collect", "provide", "upload", "obtain",
+    "request", "submit", "consult", "contact", "ask",
+    "reach out", "find out", "determine", "clarify",
+    "confirm", "verify your", "check with",
+]
+
+
+def _is_data_collection_action(action_text: str) -> bool:
+    """Return True if the action text is a data-collection request, not a tax-optimization move."""
+    lower = action_text.lower()
+    return any(kw in lower for kw in DATA_COLLECTION_KEYWORDS)
+
+
+def _extract_dollar_amount(benefit_str: str) -> float:
+    """Return largest dollar figure found in an estimated_benefit string."""
+    matches = _re.findall(r'\$[\d,]+', benefit_str)
+    if not matches:
+        return 0.0
+    return max(float(m.replace('$', '').replace(',', '')) for m in matches)
+
+
+def _consolidate_tlh_actions(actions: list[PriorityAction]) -> list[PriorityAction]:
+    """Merge multiple TLH priority actions into a single consolidated action (Fix 3)."""
+    tlh_actions = [a for a in actions if a.category == "tlh"]
+    non_tlh_actions = [a for a in actions if a.category != "tlh"]
+
+    if len(tlh_actions) <= 1:
+        return actions  # nothing to consolidate
+
+    # Sum estimated benefits across all TLH actions
+    total_savings = sum(_extract_dollar_amount(a.estimated_benefit) for a in tlh_actions)
+    if total_savings > 0:
+        benefit_str = f"${total_savings:,.0f} in total tax savings from all positions"
+    else:
+        benefit_str = tlh_actions[0].estimated_benefit
+
+    # Best consequence (largest dollar mentioned)
+    best_consequence = max(
+        tlh_actions, key=lambda a: _extract_dollar_amount(a.consequence)
+    ).consequence or tlh_actions[0].consequence
+
+    consolidated = PriorityAction(
+        priority=0,  # will be re-numbered in step 8
+        category="tlh",
+        action=" | ".join(a.action for a in tlh_actions),
+        rationale=tlh_actions[0].rationale,
+        estimated_benefit=benefit_str,
+        urgency="this_year",
+        confidence="high",
+        consequence=best_consequence,
+    )
+
+    result = non_tlh_actions + [consolidated]
+    logger.info(
+        "plan_synthesizer _consolidate_tlh_actions: consolidated %d TLH actions into 1",
+        len(tlh_actions),
+    )
+    return result
 
 
 def _calc_federal_tax_mfj_2026(agi: float) -> float:
@@ -91,6 +161,10 @@ class PlanSynthesizer:
             (a.balance or 0) for a in accounts.hsa
         )
 
+        # Pre-calculate projected_pretax_at_rmd deterministically (Fix 4)
+        years_to_rmd = max(0, 73 - personal.age)
+        projected_pretax_at_rmd = _project_balance(pretax_balance, years_to_rmd)
+
         snapshot_summary = {
             "age": personal.age,
             "spouse_age": personal.spouse_age,
@@ -104,6 +178,8 @@ class PlanSynthesizer:
             "total_taxable_balance": taxable_balance,
             "total_hsa_balance": hsa_balance,
             "cash_savings": accounts.cash_savings,
+            "projected_pretax_at_rmd": projected_pretax_at_rmd,
+            "years_to_rmd": years_to_rmd,
             "income_projections": [
                 p.model_dump() for p in (snapshot.income.projections or [])
             ],
@@ -132,8 +208,15 @@ class PlanSynthesizer:
         }
 
         prompt_template = _PROMPT_PATH.read_text()
+        precalc_note = (
+            f"\n\nIMPORTANT — PRE-CALCULATED VALUES (use exactly as provided, do NOT recalculate):\n"
+            f"- projected_pretax_at_rmd: ${projected_pretax_at_rmd:,.0f} "
+            f"(current pre-tax ${pretax_balance:,.0f} compounded at 6% for {years_to_rmd} years to age 73)\n"
+            f"\nDO NOT include data-gathering steps in priority_actions. "
+            f"Only include actionable tax optimization strategies.\n"
+        )
         user_message = (
-            f"{prompt_template}\n\n"
+            f"{prompt_template}{precalc_note}\n\n"
             f"<input_data>\n{json.dumps(input_slice, indent=2)}\n</input_data>\n\n"
             "Output valid JSON matching the schema exactly."
         )
@@ -142,6 +225,9 @@ class PlanSynthesizer:
 
         # Deterministic post-processing
         result = _post_process(result, snapshot, trajectory, conversions)
+
+        # Deterministic with-plan comparison (Fix 1)
+        result = _calculate_with_plan_comparison(result, snapshot, trajectory, conversions)
 
         # Assertions
         if not result.priority_actions:
@@ -222,17 +308,6 @@ class PlanSynthesizer:
         raise ReasoningStepError("plan_synthesizer", "Exhausted retries.")
 
 
-import re as _re
-
-
-def _extract_dollar_amount(benefit_str: str) -> float:
-    """Return largest dollar figure found in an estimated_benefit string."""
-    matches = _re.findall(r'\$[\d,]+', benefit_str)
-    if not matches:
-        return 0.0
-    return max(float(m.replace('$', '').replace(',', '')) for m in matches)
-
-
 def _post_process(
     result: PlanSynthesizerOutput,
     snapshot: ClientFinancialSnapshotSchema,
@@ -242,16 +317,52 @@ def _post_process(
     """
     Deterministic post-processing corrections applied after Claude's output.
 
+    Step 0: Pass-through placeholder rows from conversions.conversion_plan for any
+            window years missing from the conversion table (Fix 2).
     Step 1: Fill cumulative_converted as running total across conversion rows.
     Step 2: Override state_tax for IL clients (must equal convert_amount × 0.0495).
     Step 3: Recalculate total_tax and effective_rate_pct per row.
     Step 4: Recalculate conversion table summary totals.
     Step 5: Verify RMD math — log warning if projected_first_rmd is significantly off.
-    Step 6: Fill DoNothingComparison with-plan fields using compound growth math.
-    Step 7: Generate illustrative conversion rows when window years exist but rows are empty.
-    Step 8: Re-sort priority_actions by estimated lifetime dollar impact; re-number.
+    Step 6: Generate illustrative conversion rows when window years exist but rows are empty.
+    Step 7: Filter data-collection actions from priority_actions.
+    Step 7.5: Consolidate multiple TLH actions into one (Fix 3).
+    Step 8: Re-sort remaining priority_actions by estimated dollar impact; re-number.
+    NOTE: DoNothingComparison fields are set by _calculate_with_plan_comparison(),
+          called separately in run() after _post_process().
     """
     state = snapshot.personal.state.upper() if snapshot.personal.state else ""
+
+    # Step 0: Pass-through conversion_plan rows not already in ct.rows (Fix 2)
+    ct_pre = result.conversion_table
+    existing_years = {r.year for r in ct_pre.rows}
+    added_placeholders = 0
+    for entry in conversions.conversion_plan:
+        if entry.year not in existing_years:
+            ct_pre.rows.append(
+                YearlyConversionRow(
+                    year=entry.year,
+                    pre_conversion_income=0.0,
+                    convert_amount=entry.convert_amount,
+                    post_conversion_agi=entry.post_conversion_agi,
+                    federal_tax=entry.estimated_federal_tax,
+                    state_tax=entry.estimated_state_tax,
+                    total_tax=round(entry.estimated_federal_tax + entry.estimated_state_tax, 2),
+                    effective_rate_pct=0.0,
+                    cumulative_converted=0.0,  # recalculated in Step 1
+                    irmaa_safe=entry.irmaa_safe,
+                    note=entry.net_benefit_note if entry.net_benefit_note else None,
+                )
+            )
+            existing_years.add(entry.year)
+            added_placeholders += 1
+    if added_placeholders:
+        ct_pre.rows.sort(key=lambda r: r.year)
+        logger.info(
+            "plan_synthesizer _post_process step0: added %d pass-through rows from conversion_plan",
+            added_placeholders,
+        )
+
     rows = result.conversion_table.rows
 
     # Step 1 & 2 & 3: Iterate rows, fix state_tax (IL), recalculate totals
@@ -305,50 +416,7 @@ def _post_process(
                 actual_rmd, expected_rmd,
             )
 
-    # Step 6: Fill DoNothingComparison with-plan fields using compound growth math
-    dnc = result.do_nothing_comparison
-    pretax_without = trajectory.projected_pretax_at_rmd or 0.0
-    # Use post-processed ct.total_converted; fall back to step_2 total
-    total_conv = ct.total_converted or conversions.total_converted or 0.0
-    rmd_rate = trajectory.rmd_bracket_estimate or 0.0
-    years_to_rmd = max(0, 73 - snapshot.personal.age)
-
-    # with-plan pre-tax at 73: subtract conversions × 1.8 growth multiplier (conservative)
-    with_plan_pretax = max(0.0, pretax_without - total_conv * 1.8)
-    first_rmd_without = round(pretax_without / _RMD_FACTOR_73, 2)
-    first_rmd_with = round(with_plan_pretax / _RMD_FACTOR_73, 2)
-
-    # Roth balances grown at 6% compound over years_to_rmd
-    # (IL retirement distributions are state-tax-free, so no state rate on Roth)
-    accounts = snapshot.accounts
-    current_roth = sum((a.balance or 0) for a in accounts.roth_ira) + sum(
-        (a.balance or 0) for a in accounts.roth_401k
-    )
-    growth = (1.06 ** years_to_rmd) if years_to_rmd > 0 else 1.0
-    do_nothing_roth = round(current_roth * growth, 2)
-    with_plan_roth = round((current_roth + total_conv) * growth, 2)
-
-    # Always populate without-plan fields; only override with-plan if null/same-as-without
-    dnc.pretax_at_73_without_plan = round(pretax_without, 2)
-    dnc.first_rmd_without_plan = first_rmd_without
-    dnc.annual_rmd_tax_without_plan = round(first_rmd_without * rmd_rate, 2)
-    dnc.roth_at_73_without_plan = do_nothing_roth
-
-    needs_with_plan = (
-        dnc.pretax_at_73_with_plan == 0.0
-        or dnc.pretax_at_73_with_plan == dnc.pretax_at_73_without_plan
-    )
-    if needs_with_plan:
-        logger.warning(
-            "plan_synthesizer post_process: comparison table with_plan fields were null "
-            "or equal to do_nothing — populated via deterministic post-processing"
-        )
-    dnc.pretax_at_73_with_plan = round(with_plan_pretax, 2)
-    dnc.first_rmd_with_plan = first_rmd_with
-    dnc.annual_rmd_tax_with_plan = round(first_rmd_with * rmd_rate, 2)
-    dnc.roth_at_73_with_plan = with_plan_roth
-
-    # Step 7: Illustrative conversion table when rows are empty but window years exist
+    # Step 6: Illustrative conversion table when rows are empty but window years exist
     if not ct.rows and trajectory.conversion_window_years:
         is_il = state == "IL"
         illustrative_rows: list[YearlyConversionRow] = []
@@ -396,6 +464,27 @@ def _post_process(
             trajectory.conversion_window_years,
         )
 
+    # Step 7: Filter data-collection actions from priority_actions
+
+    if result.priority_actions:
+        filtered = [a for a in result.priority_actions if not _is_data_collection_action(a.action)]
+        if filtered:
+            removed = len(result.priority_actions) - len(filtered)
+            if removed:
+                logger.info(
+                    "plan_synthesizer post_process: removed %d data-collection action(s) from priority_actions",
+                    removed,
+                )
+            result.priority_actions = filtered
+        else:
+            logger.warning(
+                "plan_synthesizer post_process: all priority_actions were data-collection — keeping original"
+            )
+
+    # Step 7.5: Consolidate multiple TLH actions into one (Fix 3)
+    if result.priority_actions:
+        result.priority_actions = _consolidate_tlh_actions(result.priority_actions)
+
     # Step 8: Re-sort priority_actions by estimated lifetime dollar impact; re-number
     if result.priority_actions:
         result.priority_actions.sort(
@@ -404,5 +493,134 @@ def _post_process(
         )
         for i, action in enumerate(result.priority_actions):
             action.priority = i + 1
+
+    return result
+
+
+def _calculate_with_plan_comparison(
+    result: PlanSynthesizerOutput,
+    snapshot: ClientFinancialSnapshotSchema,
+    trajectory: TaxTrajectoryOutput,
+    conversions: ConversionOptimizerOutput,
+) -> PlanSynthesizerOutput:
+    """
+    Deterministic calculation of DoNothingComparison with_plan_* fields.
+    Always overrides ALL comparison fields after Claude returns.
+
+    Steps:
+    1. total_converted from ct.rows or conversions.total_converted
+    2. do_nothing_pretax = trajectory.projected_pretax_at_rmd
+    3. with_plan_pretax = max(0, do_nothing_pretax - total_converted × 1.5)
+    4. RMD tax at rmd_bracket_estimate (federal only — IL exempts retirement income)
+    5. IRMAA: (first_rmd + ss_annual × 0.85) > IRMAA_TIER1_MFJ threshold
+    6. Roth at death: compound current_roth forward; with_plan adds total_converted
+    7. lifetime_savings range string: annual_savings × 20 × [0.7, 1.3]
+    8. Override ALL dnc fields (legacy + canonical)
+    """
+    ct = result.conversion_table
+    dnc = result.do_nothing_comparison
+    personal = snapshot.personal
+
+    # Step 1: total_converted
+    total_converted = ct.total_converted or conversions.total_converted or 0.0
+
+    # Step 2: do_nothing pre-tax balance at RMD age
+    do_nothing_pretax = trajectory.projected_pretax_at_rmd or 0.0
+
+    # Step 3: with_plan pre-tax balance (1.5× accounts for forgone Roth growth)
+    with_plan_pretax = max(0.0, do_nothing_pretax - total_converted * 1.5)
+
+    # Step 4: RMD calculations (IL exempts retirement income — state_rmd_rate = 0)
+    do_nothing_first_rmd = round(do_nothing_pretax / _RMD_FACTOR_73, 2)
+    with_plan_first_rmd = round(with_plan_pretax / _RMD_FACTOR_73, 2)
+
+    federal_rmd_rate = trajectory.rmd_bracket_estimate or 0.24
+    do_nothing_rmd_annual_tax = round(do_nothing_first_rmd * federal_rmd_rate, 2)
+    with_plan_rmd_annual_tax = round(with_plan_first_rmd * federal_rmd_rate, 2)
+
+    # Step 5: IRMAA three-way label logic (Fix 4)
+    ss = snapshot.income.social_security if snapshot.income else None
+    ss_annual = float(ss.monthly_benefit_estimate * 12) if (ss and ss.monthly_benefit_estimate) else 0.0
+
+    def _irmaa_check(rmd_alone: float, rmd_plus_ss: float, threshold: float) -> tuple[str, bool]:
+        if rmd_alone > threshold:
+            return "Yes", True
+        elif rmd_plus_ss > threshold:
+            return "Likely (with SS income)", True
+        else:
+            return "No", False
+
+    do_nothing_irmaa_label, do_nothing_irmaa_triggered = _irmaa_check(
+        do_nothing_first_rmd,
+        do_nothing_first_rmd + ss_annual,
+        _IRMAA_TIER1_MFJ,
+    )
+    with_plan_irmaa_label, with_plan_irmaa_triggered = _irmaa_check(
+        with_plan_first_rmd,
+        with_plan_first_rmd + ss_annual,
+        _IRMAA_TIER1_MFJ,
+    )
+
+    do_nothing_irmaa_cost = float(_IRMAA_ANNUAL_COST_MFJ) if do_nothing_irmaa_triggered else None
+    with_plan_irmaa_cost = float(_IRMAA_ANNUAL_COST_MFJ) if with_plan_irmaa_triggered else None
+
+    # Step 6: Roth balance at RMD age (death proxy)
+    years_to_rmd = trajectory.years_until_rmd or max(0, 73 - personal.age)
+    current_roth = sum(
+        (a.balance or 0) for a in snapshot.accounts.roth_ira
+    ) + sum(
+        (a.balance or 0) for a in snapshot.accounts.roth_401k
+    )
+    do_nothing_roth = round(current_roth * (1.06 ** years_to_rmd), 2)
+    with_plan_roth = round((current_roth + total_converted) * (1.06 ** years_to_rmd), 2)
+
+    # Step 7: Lifetime savings range string
+    annual_savings = do_nothing_rmd_annual_tax - with_plan_rmd_annual_tax
+    savings_20yr = annual_savings * 20
+    low = round(savings_20yr * 0.7)
+    high = round(savings_20yr * 1.3)
+    lifetime_savings_str = f"${low:,.0f} \u2013 ${high:,.0f}"
+
+    heir_benefit_delta = round(with_plan_roth - do_nothing_roth)
+    heir_benefit_str = (
+        f"Heirs inherit ~${with_plan_roth:,.0f} in tax-free Roth assets vs. "
+        f"~${do_nothing_roth:,.0f} without the plan \u2014 a ~${heir_benefit_delta:,.0f} advantage."
+    )
+
+    # Step 8: Override ALL dnc fields (legacy + canonical)
+    dnc.pretax_at_73_without_plan = round(do_nothing_pretax, 2)
+    dnc.pretax_at_73_with_plan = round(with_plan_pretax, 2)
+    dnc.first_rmd_without_plan = do_nothing_first_rmd
+    dnc.first_rmd_with_plan = with_plan_first_rmd
+    dnc.annual_rmd_tax_without_plan = do_nothing_rmd_annual_tax
+    dnc.annual_rmd_tax_with_plan = with_plan_rmd_annual_tax
+    dnc.roth_at_73_without_plan = do_nothing_roth
+    dnc.roth_at_73_with_plan = with_plan_roth
+
+    dnc.do_nothing_pretax_at_rmd = round(do_nothing_pretax, 2)
+    dnc.do_nothing_first_rmd = do_nothing_first_rmd
+    dnc.do_nothing_rmd_annual_tax = do_nothing_rmd_annual_tax
+    dnc.do_nothing_irmaa_triggered = do_nothing_irmaa_triggered
+    dnc.do_nothing_irmaa_annual_cost = do_nothing_irmaa_cost
+    dnc.do_nothing_roth_at_death = do_nothing_roth
+
+    dnc.with_plan_pretax_at_rmd = round(with_plan_pretax, 2)
+    dnc.with_plan_first_rmd = with_plan_first_rmd
+    dnc.with_plan_rmd_annual_tax = with_plan_rmd_annual_tax
+    dnc.with_plan_irmaa_triggered = with_plan_irmaa_triggered
+    dnc.with_plan_irmaa_annual_cost = with_plan_irmaa_cost
+    dnc.with_plan_roth_at_death = with_plan_roth
+    dnc.with_plan_lifetime_savings = lifetime_savings_str
+    dnc.heir_benefit = heir_benefit_str
+    dnc.do_nothing_irmaa_label = do_nothing_irmaa_label
+    dnc.with_plan_irmaa_label = with_plan_irmaa_label
+
+    logger.info(
+        "plan_synthesizer _calculate_with_plan_comparison: "
+        "do_nothing_pretax=%.0f with_plan_pretax=%.0f total_converted=%.0f "
+        "annual_savings=%.0f lifetime_savings=%s",
+        do_nothing_pretax, with_plan_pretax, total_converted,
+        annual_savings, lifetime_savings_str,
+    )
 
     return result

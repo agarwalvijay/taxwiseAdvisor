@@ -14,6 +14,14 @@ from backend.models.snapshot import ClientFinancialSnapshotSchema
 logger = logging.getLogger(__name__)
 
 _PROMPT_PATH = Path(__file__).parent.parent.parent / "prompts" / "tax_trajectory.txt"
+_RMD_START_AGE = 73
+_RMD_DIVISOR = 26.5
+_GROWTH_RATE = 0.06
+
+
+def _project_balance(current_balance: float, years: int, annual_growth_rate: float = _GROWTH_RATE) -> float:
+    """Compound a balance forward at a fixed annual growth rate. Always deterministic."""
+    return round(current_balance * ((1 + annual_growth_rate) ** years), 2)
 _MODEL = "claude-sonnet-4-5"
 _SYSTEM = (
     "You are a tax analysis engine for a financial planning software tool. "
@@ -50,6 +58,25 @@ class TaxTrajectoryAnalyzer:
             (a.balance or 0) for a in accounts.roth_401k
         )
 
+        # Fix 1: Pre-calculate deterministic projections before calling Claude
+        years_to_rmd = max(0, _RMD_START_AGE - personal.age)
+        years_to_retirement = max(0, personal.retirement_target_age - personal.age)
+        projected_pretax_at_rmd = _project_balance(pretax_balance, years_to_rmd)
+        projected_pretax_at_retirement = _project_balance(pretax_balance, years_to_retirement)
+        projected_first_rmd = round(projected_pretax_at_rmd / _RMD_DIVISOR, 2)
+
+        det_proj = {
+            "projected_pretax_at_rmd": projected_pretax_at_rmd,
+            "projected_pretax_at_retirement": projected_pretax_at_retirement,
+            "projected_first_rmd_no_conversions": projected_first_rmd,
+            "years_to_rmd": years_to_rmd,
+            "years_to_retirement": years_to_retirement,
+            "rmd_divisor": _RMD_DIVISOR,
+            "growth_rate_assumption": _GROWTH_RATE,
+            "total_pretax_today": pretax_balance,
+            "total_roth_today": roth_balance,
+        }
+
         input_slice = {
             "age": personal.age,
             "spouse_age": personal.spouse_age,
@@ -61,17 +88,48 @@ class TaxTrajectoryAnalyzer:
             "social_security": income.social_security.model_dump() if income.social_security else None,
             "total_pretax_balance": pretax_balance,
             "total_roth_balance": roth_balance,
-            "rmd_start_age": rmd_profile.rmd_start_age if rmd_profile else 73,
+            "rmd_start_age": rmd_profile.rmd_start_age if rmd_profile else _RMD_START_AGE,
+            "deterministic_projections": det_proj,
         }
+
+        precalc_note = (
+            f"\n\nCRITICAL: Use ONLY these pre-calculated values. "
+            f"Do NOT recalculate balance projections yourself.\n\n"
+            f"Pre-calculated ground truth (do not override):\n"
+            f"- Current pre-tax balance: ${pretax_balance:,.0f}\n"
+            f"- Projected pre-tax balance at age {_RMD_START_AGE}: ${projected_pretax_at_rmd:,.0f}\n"
+            f"- Projected pre-tax balance at retirement (age {personal.retirement_target_age}): "
+            f"${projected_pretax_at_retirement:,.0f}\n"
+            f"- First RMD without conversions: ${projected_first_rmd:,.0f} "
+            f"(= ${projected_pretax_at_rmd:,.0f} / {_RMD_DIVISOR})\n"
+            f"- Years to RMD: {years_to_rmd}\n"
+            f"- Years to retirement: {years_to_retirement}\n"
+            f"- Growth rate assumption: {_GROWTH_RATE * 100:.0f}% nominal\n\n"
+            f"Every figure in your output that references the pre-tax balance at age {_RMD_START_AGE}, "
+            f"the first RMD, or years to retirement/RMD MUST use exactly these values. "
+            f"Do not round differently. Do not recalculate.\n"
+        )
 
         prompt_template = _PROMPT_PATH.read_text()
         user_message = (
-            f"{prompt_template}\n\n"
+            f"{prompt_template}{precalc_note}\n\n"
             f"<input_data>\n{json.dumps(input_slice, indent=2)}\n</input_data>\n\n"
             "Output valid JSON matching the schema exactly."
         )
 
-        return await self._call_with_retry(user_message, input_slice)
+        result = await self._call_with_retry(user_message, input_slice)
+
+        # Fix 1: Always override with deterministic values regardless of what Claude returned
+        result.projected_pretax_at_rmd = projected_pretax_at_rmd
+        result.projected_first_rmd = projected_first_rmd
+        result.years_until_rmd = years_to_rmd
+
+        logger.info(
+            "tax_trajectory deterministic_override: "
+            "projected_pretax_at_rmd=%.0f projected_first_rmd=%.0f years_to_rmd=%d",
+            projected_pretax_at_rmd, projected_first_rmd, years_to_rmd,
+        )
+        return result
 
     async def _call_with_retry(
         self, user_message: str, input_slice: dict

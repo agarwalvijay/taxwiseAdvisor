@@ -179,7 +179,7 @@ class DoNothingComparison(BaseModel):
     irmaa_triggered: bool
     estimated_lifetime_tax_savings: float
     narrative: str
-    # Comparison table fields — filled deterministically by _post_process
+    # Legacy field names (kept for template backward-compat)
     pretax_at_73_without_plan: float = 0.0
     pretax_at_73_with_plan: float = 0.0
     first_rmd_without_plan: float = 0.0
@@ -188,6 +188,24 @@ class DoNothingComparison(BaseModel):
     annual_rmd_tax_with_plan: float = 0.0
     roth_at_73_without_plan: float = 0.0
     roth_at_73_with_plan: float = 0.0
+    # Canonical fields — always set by _calculate_with_plan_comparison
+    do_nothing_pretax_at_rmd: float = 0.0
+    do_nothing_first_rmd: float = 0.0
+    do_nothing_rmd_annual_tax: float = 0.0
+    do_nothing_irmaa_triggered: bool = False
+    do_nothing_irmaa_annual_cost: Optional[float] = None
+    do_nothing_roth_at_death: float = 0.0
+    with_plan_pretax_at_rmd: float = 0.0
+    with_plan_first_rmd: float = 0.0
+    with_plan_rmd_annual_tax: float = 0.0
+    with_plan_irmaa_triggered: bool = False
+    with_plan_irmaa_annual_cost: Optional[float] = None
+    with_plan_roth_at_death: float = 0.0
+    with_plan_lifetime_savings: str = ""
+    heir_benefit: str = ""
+    # IRMAA display labels (set by _calculate_with_plan_comparison)
+    do_nothing_irmaa_label: str = ""
+    with_plan_irmaa_label: str = ""
 
 
 class YearlyConversionRow(BaseModel):
@@ -224,7 +242,7 @@ class TLHSummary(BaseModel):
 
 class PriorityAction(BaseModel):
     priority: int
-    category: Literal["roth_conversion", "tlh", "asset_location", "other"]
+    category: Literal["roth_conversion", "tlh", "asset_location", "contribution", "other"]
     action: str
     rationale: str
     consequence: str = ""  # "If you don't act: ..." sentence with dollar amount

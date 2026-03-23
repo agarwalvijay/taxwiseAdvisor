@@ -32,7 +32,7 @@ from backend.models.plan import (
     YearlyConversionRow,
 )
 from backend.models.snapshot import ClientFinancialSnapshotSchema
-from backend.reasoning.plan_synthesizer import _post_process
+from backend.reasoning.plan_synthesizer import _post_process, _calculate_with_plan_comparison
 
 from backend.tests.test_reasoning import (
     SYNTHETIC_SNAPSHOT,
@@ -123,6 +123,7 @@ def test_comparison_not_zero():
     conversions = _make_conversions()
 
     processed = _post_process(result, snapshot, trajectory, conversions)
+    processed = _calculate_with_plan_comparison(processed, snapshot, trajectory, conversions)
     dnc = processed.do_nothing_comparison
 
     # with_plan pre-tax at 73 must be less than do_nothing (conversions reduce it)

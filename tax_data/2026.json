@@ -1,0 +1,844 @@
+{
+  "_metadata": {
+    "description": "TaxWise Advisor — Structured Tax Data for Tax Year 2026",
+    "version": "1.0.0",
+    "created": "2026-03-18",
+    "created_by": "TaxWise Advisor Team",
+    "review_status": "pending_cpa_review",
+    "notes": "All figures should be verified by a CPA before use in production reasoning engine. IRMAA figures announced November 2025 for 2026. Federal brackets reflect TCJA continuation. State figures reflect published 2026 guidance where available.",
+    "_sources": {
+      "federal_brackets": "https://taxfoundation.org/data/all/federal/2026-tax-brackets/",
+      "federal_brackets_official": "IRS Revenue Procedure 2025-28 (inflation adjustments for 2026)",
+      "standard_deductions": "IRS Rev. Proc. 2025-28",
+      "ltcg_brackets": "https://taxfoundation.org/data/all/federal/2026-tax-brackets/",
+      "irmaa_part_b": "CMS / Medicare.gov — 2026 Part B Premium Announcement (Nov 2025)",
+      "irmaa_part_d": "CMS — 2026 Part D IRMAA Announcement (Nov 2025)",
+      "rmd_factors": "IRS Publication 590-B, Appendix B, Uniform Lifetime Table (updated 2022, SECURE 2.0)",
+      "rmd_start_age": "SECURE 2.0 Act of 2022, Section 107",
+      "contribution_limits_401k": "IRS Notice 2025-XX (announced Oct/Nov 2025)",
+      "contribution_limits_ira": "IRS Notice 2025-XX",
+      "contribution_limits_hsa": "IRS Rev. Proc. 2025-XX",
+      "fpl_thresholds": "HHS.gov — 2026 Federal Poverty Guidelines (published Jan 2026)",
+      "niit": "IRC Section 1411 — thresholds not inflation-adjusted",
+      "ss_taxation": "IRC Section 86 — thresholds not inflation-adjusted (set in 1984, never updated)",
+      "il_state": "Illinois Department of Revenue — IL-1040 Instructions 2025; ILCS 35 ILCS 5/203",
+      "tx_state": "Texas — no state income tax (Texas Constitution, Article 8)",
+      "fl_state": "Florida — no state income tax (Florida Constitution, Article VII)",
+      "nv_state": "Nevada — no state income tax",
+      "wa_state": "Washington — no state income tax (note: 7% capital gains tax on gains >$250k enacted 2023)",
+      "wy_state": "Wyoming — no state income tax",
+      "sd_state": "South Dakota — no state income tax",
+      "ak_state": "Alaska — no state income tax",
+      "nh_state": "New Hampshire — no income tax on wages (taxes interest/dividends at 3%, phasing out)",
+      "tn_state": "Tennessee — no income tax on wages (Hall Tax fully repealed 2021)"
+    }
+  },
+
+  "year": 2026,
+
+  "federal": {
+
+    "brackets": {
+      "_note": "Taxable income = AGI minus standard deduction (or itemized). Brackets are marginal rates on taxable income.",
+      "married_filing_jointly": [
+        { "income_floor": 0,      "income_ceiling": 23850,  "rate": 0.10 },
+        { "income_floor": 23850,  "income_ceiling": 96950,  "rate": 0.12 },
+        { "income_floor": 96950,  "income_ceiling": 206700, "rate": 0.22 },
+        { "income_floor": 206700, "income_ceiling": 394600, "rate": 0.24 },
+        { "income_floor": 394600, "income_ceiling": 501050, "rate": 0.32 },
+        { "income_floor": 501050, "income_ceiling": 751600, "rate": 0.35 },
+        { "income_floor": 751600, "income_ceiling": null,   "rate": 0.37 }
+      ],
+      "single": [
+        { "income_floor": 0,      "income_ceiling": 11925,  "rate": 0.10 },
+        { "income_floor": 11925,  "income_ceiling": 48475,  "rate": 0.12 },
+        { "income_floor": 48475,  "income_ceiling": 103350, "rate": 0.22 },
+        { "income_floor": 103350, "income_ceiling": 197300, "rate": 0.24 },
+        { "income_floor": 197300, "income_ceiling": 250525, "rate": 0.32 },
+        { "income_floor": 250525, "income_ceiling": 626350, "rate": 0.35 },
+        { "income_floor": 626350, "income_ceiling": null,   "rate": 0.37 }
+      ],
+      "head_of_household": [
+        { "income_floor": 0,      "income_ceiling": 17000,  "rate": 0.10 },
+        { "income_floor": 17000,  "income_ceiling": 64850,  "rate": 0.12 },
+        { "income_floor": 64850,  "income_ceiling": 103350, "rate": 0.22 },
+        { "income_floor": 103350, "income_ceiling": 197300, "rate": 0.24 },
+        { "income_floor": 197300, "income_ceiling": 250500, "rate": 0.32 },
+        { "income_floor": 250500, "income_ceiling": 626350, "rate": 0.35 },
+        { "income_floor": 626350, "income_ceiling": null,   "rate": 0.37 }
+      ],
+      "married_filing_separately": [
+        { "income_floor": 0,      "income_ceiling": 11925,  "rate": 0.10 },
+        { "income_floor": 11925,  "income_ceiling": 48475,  "rate": 0.12 },
+        { "income_floor": 48475,  "income_ceiling": 103350, "rate": 0.22 },
+        { "income_floor": 103350, "income_ceiling": 197300, "rate": 0.24 },
+        { "income_floor": 197300, "income_ceiling": 250525, "rate": 0.32 },
+        { "income_floor": 250525, "income_ceiling": 375800, "rate": 0.35 },
+        { "income_floor": 375800, "income_ceiling": null,   "rate": 0.37 }
+      ]
+    },
+
+    "standard_deductions": {
+      "_note": "Additional deduction for age 65+ is per person. MFJ couple both 65+ get 2x the additional amount.",
+      "married_filing_jointly":    30000,
+      "single":                    15000,
+      "head_of_household":         22500,
+      "married_filing_separately": 15000,
+      "additional_age_65_plus": {
+        "married_filing_jointly":    1600,
+        "single":                    2000,
+        "head_of_household":         2000,
+        "married_filing_separately": 1600
+      },
+      "senior_deduction_2025_2028": {
+        "_note": "New senior deduction per TCJA extension. In addition to standard deduction. Phases out above MAGI thresholds.",
+        "amount": 6000,
+        "magi_phaseout_single":               75000,
+        "magi_phaseout_married_filing_jointly": 150000,
+        "eligible_tax_years": [2025, 2026, 2027, 2028]
+      }
+    },
+
+    "ltcg_brackets": {
+      "_note": "Long-term capital gains rates apply to assets held > 12 months. Thresholds based on taxable income.",
+      "married_filing_jointly": [
+        { "income_floor": 0,      "income_ceiling": 96700,  "rate": 0.00 },
+        { "income_floor": 96700,  "income_ceiling": 600050, "rate": 0.15 },
+        { "income_floor": 600050, "income_ceiling": null,   "rate": 0.20 }
+      ],
+      "single": [
+        { "income_floor": 0,      "income_ceiling": 48350,  "rate": 0.00 },
+        { "income_floor": 48350,  "income_ceiling": 533400, "rate": 0.15 },
+        { "income_floor": 533400, "income_ceiling": null,   "rate": 0.20 }
+      ],
+      "head_of_household": [
+        { "income_floor": 0,      "income_ceiling": 64750,  "rate": 0.00 },
+        { "income_floor": 64750,  "income_ceiling": 566700, "rate": 0.15 },
+        { "income_floor": 566700, "income_ceiling": null,   "rate": 0.20 }
+      ],
+      "married_filing_separately": [
+        { "income_floor": 0,      "income_ceiling": 48350,  "rate": 0.00 },
+        { "income_floor": 48350,  "income_ceiling": 300025, "rate": 0.15 },
+        { "income_floor": 300025, "income_ceiling": null,   "rate": 0.20 }
+      ]
+    },
+
+    "niit": {
+      "_note": "Net Investment Income Tax. Thresholds are NOT inflation-adjusted — same since 2013.",
+      "rate": 0.038,
+      "thresholds": {
+        "married_filing_jointly":    250000,
+        "single":                    200000,
+        "head_of_household":         200000,
+        "married_filing_separately": 125000
+      },
+      "applies_to": [
+        "dividends", "interest", "capital_gains", "rental_income", "passive_income",
+        "royalties", "annuities"
+      ],
+      "does_not_apply_to": [
+        "wages", "self_employment_income", "active_business_income",
+        "ira_distributions", "401k_distributions", "roth_distributions",
+        "social_security_benefits", "pension_income"
+      ]
+    },
+
+    "social_security_taxation": {
+      "_note": "Provisional income thresholds NOT inflation-adjusted — set in 1984 and never updated by Congress.",
+      "provisional_income_formula": "AGI + tax_exempt_interest + (0.50 * ss_benefits)",
+      "married_filing_jointly": [
+        { "provisional_income_floor": 0,     "provisional_income_ceiling": 32000, "pct_taxable": 0.00 },
+        { "provisional_income_floor": 32000, "provisional_income_ceiling": 44000, "pct_taxable": 0.50 },
+        { "provisional_income_floor": 44000, "provisional_income_ceiling": null,  "pct_taxable": 0.85 }
+      ],
+      "single": [
+        { "provisional_income_floor": 0,     "provisional_income_ceiling": 25000, "pct_taxable": 0.00 },
+        { "provisional_income_floor": 25000, "provisional_income_ceiling": 34000, "pct_taxable": 0.50 },
+        { "provisional_income_floor": 34000, "provisional_income_ceiling": null,  "pct_taxable": 0.85 }
+      ],
+      "maximum_taxable_pct": 0.85
+    },
+
+    "salt_deduction": {
+      "_note": "State and Local Tax deduction cap. Increased from $10,000 per TCJA extension 2025-2028.",
+      "cap_2025_2028": 40000,
+      "phaseout_floor_mfj": 500000,
+      "phaseout_floor_mfs": 250000,
+      "reverts_to_at_600k_mfj": 10000,
+      "cap_pre_tcja_post_2028": 10000
+    }
+  },
+
+  "irmaa": {
+    "_note": "IRMAA uses MAGI from 2 years prior (2026 premiums based on 2024 MAGI). Thresholds inflation-adjusted annually.",
+    "_announcement": "Announced by CMS in November 2025 for calendar year 2026",
+    "lookback_years": 2,
+    "part_b": {
+      "base_premium_monthly": 185.00,
+      "tiers": {
+        "married_filing_jointly": [
+          {
+            "tier": 0,
+            "magi_floor": 0,
+            "magi_ceiling": 212000,
+            "monthly_premium": 185.00,
+            "monthly_surcharge": 0.00,
+            "annual_surcharge_per_person": 0
+          },
+          {
+            "tier": 1,
+            "magi_floor": 212000,
+            "magi_ceiling": 266000,
+            "monthly_premium": 259.00,
+            "monthly_surcharge": 74.00,
+            "annual_surcharge_per_person": 888
+          },
+          {
+            "tier": 2,
+            "magi_floor": 266000,
+            "magi_ceiling": 320000,
+            "monthly_premium": 370.00,
+            "monthly_surcharge": 185.00,
+            "annual_surcharge_per_person": 2220
+          },
+          {
+            "tier": 3,
+            "magi_floor": 320000,
+            "magi_ceiling": 394000,
+            "monthly_premium": 480.80,
+            "monthly_surcharge": 295.80,
+            "annual_surcharge_per_person": 3549.60
+          },
+          {
+            "tier": 4,
+            "magi_floor": 394000,
+            "magi_ceiling": 750000,
+            "monthly_premium": 591.90,
+            "monthly_surcharge": 406.90,
+            "annual_surcharge_per_person": 4882.80
+          },
+          {
+            "tier": 5,
+            "magi_floor": 750000,
+            "magi_ceiling": null,
+            "monthly_premium": 628.90,
+            "monthly_surcharge": 443.90,
+            "annual_surcharge_per_person": 5326.80
+          }
+        ],
+        "single": [
+          {
+            "tier": 0,
+            "magi_floor": 0,
+            "magi_ceiling": 106000,
+            "monthly_premium": 185.00,
+            "monthly_surcharge": 0.00,
+            "annual_surcharge_per_person": 0
+          },
+          {
+            "tier": 1,
+            "magi_floor": 106000,
+            "magi_ceiling": 133000,
+            "monthly_premium": 259.00,
+            "monthly_surcharge": 74.00,
+            "annual_surcharge_per_person": 888
+          },
+          {
+            "tier": 2,
+            "magi_floor": 133000,
+            "magi_ceiling": 160000,
+            "monthly_premium": 370.00,
+            "monthly_surcharge": 185.00,
+            "annual_surcharge_per_person": 2220
+          },
+          {
+            "tier": 3,
+            "magi_floor": 160000,
+            "magi_ceiling": 197000,
+            "monthly_premium": 480.80,
+            "monthly_surcharge": 295.80,
+            "annual_surcharge_per_person": 3549.60
+          },
+          {
+            "tier": 4,
+            "magi_floor": 197000,
+            "magi_ceiling": 500000,
+            "monthly_premium": 591.90,
+            "monthly_surcharge": 406.90,
+            "annual_surcharge_per_person": 4882.80
+          },
+          {
+            "tier": 5,
+            "magi_floor": 500000,
+            "magi_ceiling": null,
+            "monthly_premium": 628.90,
+            "monthly_surcharge": 443.90,
+            "annual_surcharge_per_person": 5326.80
+          }
+        ]
+      }
+    },
+    "part_d": {
+      "_note": "Part D IRMAA is an add-on to the plan premium. Ranges shown are typical — actual varies by plan.",
+      "tiers": {
+        "married_filing_jointly": [
+          { "tier": 0, "magi_floor": 0,      "magi_ceiling": 212000, "monthly_surcharge": 0.00  },
+          { "tier": 1, "magi_floor": 212000, "magi_ceiling": 266000, "monthly_surcharge": 12.90 },
+          { "tier": 2, "magi_floor": 266000, "magi_ceiling": 320000, "monthly_surcharge": 33.30 },
+          { "tier": 3, "magi_floor": 320000, "magi_ceiling": 394000, "monthly_surcharge": 53.80 },
+          { "tier": 4, "magi_floor": 394000, "magi_ceiling": 750000, "monthly_surcharge": 74.20 },
+          { "tier": 5, "magi_floor": 750000, "magi_ceiling": null,   "monthly_surcharge": 81.00 }
+        ],
+        "single": [
+          { "tier": 0, "magi_floor": 0,      "magi_ceiling": 106000, "monthly_surcharge": 0.00  },
+          { "tier": 1, "magi_floor": 106000, "magi_ceiling": 133000, "monthly_surcharge": 12.90 },
+          { "tier": 2, "magi_floor": 133000, "magi_ceiling": 160000, "monthly_surcharge": 33.30 },
+          { "tier": 3, "magi_floor": 160000, "magi_ceiling": 197000, "monthly_surcharge": 53.80 },
+          { "tier": 4, "magi_floor": 197000, "magi_ceiling": 500000, "monthly_surcharge": 74.20 },
+          { "tier": 5, "magi_floor": 500000, "magi_ceiling": null,   "monthly_surcharge": 81.00 }
+        ]
+      }
+    }
+  },
+
+  "rmd": {
+    "start_age": 73,
+    "_note_start_age": "Age 73 for anyone who turned 72 after Dec 31 2022 (SECURE 2.0). Age 75 for anyone who turns 74 after Dec 31 2032.",
+    "future_start_age": 75,
+    "future_start_age_effective_birth_year": 1960,
+    "accounts_subject_to_rmd": [
+      "traditional_ira", "sep_ira", "simple_ira",
+      "401k_pretax", "403b", "457b", "roth_401k_pre_2024"
+    ],
+    "accounts_exempt_from_rmd": [
+      "roth_ira", "roth_401k_2024_onwards"
+    ],
+    "_note_roth_401k": "Roth 401k no longer subject to RMDs effective 2024 per SECURE 2.0.",
+    "uniform_lifetime_table": {
+      "_source": "IRS Publication 590-B, Appendix B (2022 revision — applies from 2022 onwards)",
+      "_note": "Divisor = life expectancy factor. RMD = prior year Dec 31 balance / factor.",
+      "factors": {
+        "72":  27.4,
+        "73":  26.5,
+        "74":  25.5,
+        "75":  24.6,
+        "76":  23.7,
+        "77":  22.9,
+        "78":  22.0,
+        "79":  21.1,
+        "80":  20.2,
+        "81":  19.4,
+        "82":  18.5,
+        "83":  17.7,
+        "84":  16.8,
+        "85":  16.0,
+        "86":  15.2,
+        "87":  14.4,
+        "88":  13.7,
+        "89":  12.9,
+        "90":  12.2,
+        "91":  11.5,
+        "92":  10.8,
+        "93":  10.1,
+        "94":   9.5,
+        "95":   8.9,
+        "96":   8.4,
+        "97":   7.8,
+        "98":   7.3,
+        "99":   6.8,
+        "100":  6.4,
+        "101":  6.0,
+        "102":  5.6,
+        "103":  5.2,
+        "104":  4.9,
+        "105":  4.6,
+        "106":  4.3,
+        "107":  4.1,
+        "108":  3.9,
+        "109":  3.7,
+        "110":  3.5,
+        "111":  3.4,
+        "112":  3.3,
+        "113":  3.1,
+        "114":  3.0,
+        "115":  2.9,
+        "116":  2.8,
+        "117":  2.7,
+        "118":  2.5,
+        "119":  2.3,
+        "120":  2.0
+      }
+    }
+  },
+
+  "contribution_limits": {
+    "_note": "Limits announced by IRS each October/November for following year.",
+    "retirement_accounts": {
+      "401k_403b_457": {
+        "employee_contribution_limit": 23500,
+        "catchup_age_50_plus": 7500,
+        "catchup_age_60_63_secure2": 11250,
+        "_note_60_63": "Enhanced catch-up for ages 60-63 per SECURE 2.0, effective 2025. Replaces standard catch-up for those ages.",
+        "total_limit_including_employer": 70000
+      },
+      "ira": {
+        "contribution_limit": 7000,
+        "catchup_age_50_plus": 1000,
+        "roth_magi_phaseout_married_filing_jointly": {
+          "floor": 236000,
+          "ceiling": 246000
+        },
+        "roth_magi_phaseout_single": {
+          "floor": 150000,
+          "ceiling": 165000
+        },
+        "traditional_deductibility_phaseout_active_participant_mfj": {
+          "floor": 126000,
+          "ceiling": 146000
+        },
+        "traditional_deductibility_phaseout_active_participant_single": {
+          "floor": 79000,
+          "ceiling": 89000
+        },
+        "traditional_deductibility_phaseout_non_participant_spouse_mfj": {
+          "floor": 236000,
+          "ceiling": 246000
+        }
+      },
+      "sep_ira": {
+        "contribution_limit": 70000,
+        "pct_of_compensation": 0.25,
+        "max_compensation_considered": 350000
+      },
+      "simple_ira": {
+        "contribution_limit": 16500,
+        "catchup_age_50_plus": 3500,
+        "catchup_age_60_63_secure2": 5250
+      }
+    },
+    "hsa": {
+      "self_only_coverage": 4300,
+      "family_coverage": 8550,
+      "catchup_age_55_plus": 1000,
+      "minimum_deductible_self_only": 1650,
+      "minimum_deductible_family": 3300,
+      "maximum_out_of_pocket_self_only": 8300,
+      "maximum_out_of_pocket_family": 16600
+    },
+    "gift_and_estate": {
+      "annual_gift_exclusion_per_recipient": 18000,
+      "estate_tax_exemption_per_person": 13990000,
+      "_note": "Estate exemption scheduled to revert to ~$7M (inflation-adjusted) after 2025 unless extended. Monitor legislative status."
+    }
+  },
+
+  "aca": {
+    "_note": "Federal Poverty Level thresholds for 48 contiguous states. AK and HI have higher FPL thresholds.",
+    "_source": "HHS.gov — 2026 Federal Poverty Guidelines (announced January 2026)",
+    "fpl_48_states": {
+      "household_size_1":  15650,
+      "household_size_2":  21150,
+      "household_size_3":  26650,
+      "household_size_4":  32150,
+      "household_size_5":  37650,
+      "household_size_6":  43150,
+      "household_size_7":  48650,
+      "household_size_8":  54150,
+      "additional_per_person": 5500
+    },
+    "ptc_eligibility": {
+      "min_pct_fpl": 1.00,
+      "max_pct_fpl": 4.00,
+      "_note": "Enhanced subsidies through 2025 removed the 400% FPL cliff. Check current law — may have changed for 2026.",
+      "magi_includes": [
+        "agi", "tax_exempt_interest", "non_taxable_social_security",
+        "roth_conversions", "foreign_income_exclusion"
+      ]
+    },
+    "cliff_risk_note": "Roth conversions count as MAGI for ACA purposes. Exceeding 400% FPL can eliminate substantial subsidies. Model carefully for pre-Medicare retirees."
+  },
+
+  "social_security": {
+    "full_retirement_age": {
+      "_note": "FRA for those born 1960 or later.",
+      "born_before_1955": 66,
+      "born_1955_to_1959": "66 and 2-10 months (varies by birth year)",
+      "born_1960_or_later": 67
+    },
+    "early_filing_age": 62,
+    "delayed_filing_max_age": 70,
+    "delayed_filing_bonus_per_year_past_fra": 0.08,
+    "early_filing_reduction_per_month": 0.00555,
+    "medicare_eligibility_age": 65
+  },
+
+  "states": {
+
+    "IL": {
+      "name": "Illinois",
+      "source": "Illinois Department of Revenue — IL-1040 Instructions 2025; 35 ILCS 5/203",
+      "has_income_tax": true,
+      "rate_type": "flat",
+      "flat_rate": 0.0495,
+      "brackets": null,
+      "standard_deduction": 0,
+      "personal_exemption": 2425,
+      "retirement_income_treatment": {
+        "traditional_ira_distributions": "exempt",
+        "roth_ira_distributions": "exempt",
+        "401k_distributions": "exempt",
+        "pension_income": "exempt",
+        "social_security": "exempt",
+        "rmd_distributions": "exempt",
+        "_note": "Illinois exempts virtually all retirement income from state income tax. This is a significant advantage for IL residents vs. states that tax retirement income."
+      },
+      "roth_conversion_treatment": {
+        "taxable": true,
+        "rate": 0.0495,
+        "_note": "Roth conversions are ordinary income events, NOT retirement distributions. Illinois taxes them at 4.95%. This creates the key asymmetry: pay 4.95% on conversion now, but future Roth withdrawals are IL state-tax-free."
+      },
+      "capital_gains_treatment": {
+        "taxed_as_ordinary_income": true,
+        "rate": 0.0495,
+        "_note": "Illinois does not have preferential capital gains rates. All gains taxed at flat 4.95%."
+      },
+      "ltcg_combined_rate": {
+        "_note": "Federal 15% LTCG + 4.95% IL = 19.95% combined for most IL residents",
+        "federal_15pct_bracket": 0.1995,
+        "federal_20pct_bracket": 0.2495
+      },
+      "irmaa_note": "IL has no state equivalent of IRMAA.",
+      "planning_notes": [
+        "The conversion/distribution asymmetry makes Roth conversions more attractive for IL residents than many other states.",
+        "No state capital gains preference means TLH saves at full 4.95% state rate on gains.",
+        "High-income IL residents pay federal LTCG + 4.95% IL = up to 24.95% on long-term gains."
+      ]
+    },
+
+    "TX": {
+      "name": "Texas",
+      "source": "Texas Constitution, Article 8, Section 1",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "retirement_income_treatment": {
+        "all_retirement_income": "not_applicable_no_state_income_tax"
+      },
+      "roth_conversion_treatment": {
+        "taxable": false,
+        "rate": 0.0
+      },
+      "capital_gains_treatment": {
+        "taxed_as_ordinary_income": false,
+        "rate": 0.0
+      },
+      "planning_notes": [
+        "No state income tax — federal analysis is complete picture.",
+        "Roth conversions have no state tax cost in TX.",
+        "No state TLH benefit beyond federal."
+      ]
+    },
+
+    "FL": {
+      "name": "Florida",
+      "source": "Florida Constitution, Article VII, Section 5",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "retirement_income_treatment": {
+        "all_retirement_income": "not_applicable_no_state_income_tax"
+      },
+      "roth_conversion_treatment": {
+        "taxable": false,
+        "rate": 0.0
+      },
+      "capital_gains_treatment": {
+        "taxed_as_ordinary_income": false,
+        "rate": 0.0
+      },
+      "planning_notes": [
+        "No state income tax — federal analysis is complete picture.",
+        "Popular retirement destination — many IL advisors have clients relocating to FL.",
+        "Relocation from IL to FL dramatically improves conversion math (eliminate 4.95% state rate on conversions AND get tax-free retirement distributions)."
+      ]
+    },
+
+    "NV": {
+      "name": "Nevada",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "planning_notes": ["No state income tax — federal analysis is complete picture."]
+    },
+
+    "WA": {
+      "name": "Washington",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "capital_gains_tax": {
+        "_note": "Washington enacted a 7% capital gains tax in 2023 on gains above $250,000. Does NOT apply to retirement account distributions or real estate.",
+        "rate": 0.07,
+        "threshold": 250000,
+        "applies_to": ["long_term_capital_gains_above_threshold"],
+        "exemptions": ["retirement_account_distributions", "real_estate", "qualified_family_owned_small_business"]
+      },
+      "planning_notes": [
+        "No income tax but has 7% capital gains tax on gains >$250K.",
+        "Roth conversions are NOT subject to WA capital gains tax (they are ordinary income, not capital gains).",
+        "Large taxable portfolio liquidations may trigger WA capital gains tax."
+      ]
+    },
+
+    "WY": {
+      "name": "Wyoming",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "planning_notes": ["No state income tax — federal analysis is complete picture."]
+    },
+
+    "SD": {
+      "name": "South Dakota",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "planning_notes": ["No state income tax — federal analysis is complete picture."]
+    },
+
+    "AK": {
+      "name": "Alaska",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "planning_notes": ["No state income tax — federal analysis is complete picture."]
+    },
+
+    "NH": {
+      "name": "New Hampshire",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "_note": "NH taxes interest and dividends at 3% (phasing out — fully eliminated by 2027). Does not tax wages, salaries, retirement income, or capital gains.",
+      "interest_dividends_tax": {
+        "rate_2026": 0.03,
+        "rate_2027_onwards": 0.00,
+        "fully_eliminated_year": 2027
+      },
+      "planning_notes": [
+        "Effectively no income tax by 2027.",
+        "Roth conversions not subject to NH tax (not interest or dividends).",
+        "Small interest/dividend tax may apply to investment income in 2026."
+      ]
+    },
+
+    "TN": {
+      "name": "Tennessee",
+      "has_income_tax": false,
+      "rate_type": "none",
+      "flat_rate": 0.0,
+      "_note": "Hall Tax (interest and dividends) fully repealed as of 2021. Tennessee has no income tax of any kind.",
+      "planning_notes": ["No state income tax — federal analysis is complete picture."]
+    },
+
+    "PA": {
+      "name": "Pennsylvania",
+      "source": "Pennsylvania Department of Revenue — PA-40 Instructions 2025",
+      "has_income_tax": true,
+      "rate_type": "flat",
+      "flat_rate": 0.0307,
+      "standard_deduction": 0,
+      "retirement_income_treatment": {
+        "traditional_ira_distributions": "exempt",
+        "roth_ira_distributions": "exempt",
+        "401k_distributions": "exempt",
+        "pension_income": "exempt_if_from_eligible_employer_plan",
+        "social_security": "exempt",
+        "_note": "PA exempts most retirement distributions but rules are nuanced — early distributions may not qualify."
+      },
+      "roth_conversion_treatment": {
+        "taxable": true,
+        "rate": 0.0307,
+        "_note": "Roth conversions are taxable in PA as ordinary income. Same asymmetry as IL but at lower rate."
+      },
+      "capital_gains_treatment": {
+        "taxed_as_ordinary_income": true,
+        "rate": 0.0307
+      },
+      "planning_notes": [
+        "Similar retirement income exemption structure to IL but lower rate (3.07% vs 4.95%).",
+        "Conversions taxable at 3.07% — future Roth withdrawals PA tax-free."
+      ]
+    },
+
+    "CA": {
+      "name": "California",
+      "source": "California Franchise Tax Board — FTB Publication 1005",
+      "has_income_tax": true,
+      "rate_type": "progressive",
+      "flat_rate": null,
+      "_cpa_review_required": true,
+      "_note": "California has the highest state income tax in the US. Does NOT exempt retirement income. Requires full bracket modeling.",
+      "brackets_single_and_mfs": [
+        { "income_floor": 0,       "income_ceiling": 10756,  "rate": 0.0100 },
+        { "income_floor": 10756,   "income_ceiling": 25499,  "rate": 0.0200 },
+        { "income_floor": 25499,   "income_ceiling": 40245,  "rate": 0.0400 },
+        { "income_floor": 40245,   "income_ceiling": 55866,  "rate": 0.0600 },
+        { "income_floor": 55866,   "income_ceiling": 70606,  "rate": 0.0800 },
+        { "income_floor": 70606,   "income_ceiling": 360659, "rate": 0.0930 },
+        { "income_floor": 360659,  "income_ceiling": 432787, "rate": 0.1030 },
+        { "income_floor": 432787,  "income_ceiling": 721314, "rate": 0.1130 },
+        { "income_floor": 721314,  "income_ceiling": 1000000,"rate": 0.1230 },
+        { "income_floor": 1000000, "income_ceiling": null,   "rate": 0.1330 }
+      ],
+      "brackets_mfj_and_hoh": [
+        { "income_floor": 0,       "income_ceiling": 21512,  "rate": 0.0100 },
+        { "income_floor": 21512,   "income_ceiling": 50998,  "rate": 0.0200 },
+        { "income_floor": 50998,   "income_ceiling": 80490,  "rate": 0.0400 },
+        { "income_floor": 80490,   "income_ceiling": 111732, "rate": 0.0600 },
+        { "income_floor": 111732,  "income_ceiling": 141212, "rate": 0.0800 },
+        { "income_floor": 141212,  "income_ceiling": 721318, "rate": 0.0930 },
+        { "income_floor": 721318,  "income_ceiling": 865574, "rate": 0.1030 },
+        { "income_floor": 865574,  "income_ceiling": 1000000,"rate": 0.1130 },
+        { "income_floor": 1000000, "income_ceiling": 1442628,"rate": 0.1230 },
+        { "income_floor": 1442628, "income_ceiling": null,   "rate": 0.1330 }
+      ],
+      "mental_health_surcharge": {
+        "rate": 0.01,
+        "threshold_single": 1000000,
+        "threshold_mfj": 1000000
+      },
+      "retirement_income_treatment": {
+        "traditional_ira_distributions": "fully_taxable",
+        "roth_ira_distributions": "exempt",
+        "401k_distributions": "fully_taxable",
+        "pension_income": "partially_taxable",
+        "social_security": "exempt",
+        "_note": "CA taxes traditional IRA and 401k distributions as ordinary income at full progressive rates. This significantly changes Roth conversion math vs. IL/PA."
+      },
+      "roth_conversion_treatment": {
+        "taxable": true,
+        "rate_type": "progressive",
+        "_note": "Conversions taxable at CA marginal rate. But future Roth distributions are CA state-tax-free. The conversion benefit in CA depends heavily on current vs. future marginal CA rate."
+      },
+      "capital_gains_treatment": {
+        "taxed_as_ordinary_income": true,
+        "rate_type": "progressive",
+        "_note": "CA has NO preferential capital gains rate. All gains taxed as ordinary income at full progressive rates up to 13.3%."
+      },
+      "planning_notes": [
+        "CA does not exempt traditional IRA/401k distributions — this significantly increases the benefit of Roth conversions done before moving to CA or while in a lower bracket.",
+        "No LTCG preference means CA residents pay up to 13.3% state on capital gains — TLH is extremely valuable.",
+        "Roth conversions in CA: pay 9.3-13.3% state now, but future Roth withdrawals are CA state-tax-free.",
+        "Many advisors recommend clients do Roth conversions BEFORE moving to CA if planning to relocate.",
+        "REQUIRES FULL PROGRESSIVE BRACKET MODELING — cannot use flat rate approximation."
+      ]
+    },
+
+    "NY": {
+      "name": "New York",
+      "source": "New York Department of Taxation and Finance — IT-201 Instructions 2025",
+      "has_income_tax": true,
+      "rate_type": "progressive",
+      "flat_rate": null,
+      "_cpa_review_required": true,
+      "_note": "New York has complex retirement income rules. Some pension income exempt, IRA distributions generally taxable.",
+      "top_rate": 0.1097,
+      "brackets_mfj": [
+        { "income_floor": 0,       "income_ceiling": 17150,  "rate": 0.0400 },
+        { "income_floor": 17150,   "income_ceiling": 23600,  "rate": 0.0450 },
+        { "income_floor": 23600,   "income_ceiling": 27900,  "rate": 0.0525 },
+        { "income_floor": 27900,   "income_ceiling": 161550, "rate": 0.0585 },
+        { "income_floor": 161550,  "income_ceiling": 323200, "rate": 0.0625 },
+        { "income_floor": 323200,  "income_ceiling": 2155350,"rate": 0.0685 },
+        { "income_floor": 2155350, "income_ceiling": 5000000,"rate": 0.1030 },
+        { "income_floor": 5000000, "income_ceiling": 25000000,"rate": 0.1090 },
+        { "income_floor": 25000000,"income_ceiling": null,   "rate": 0.1097 }
+      ],
+      "retirement_income_treatment": {
+        "traditional_ira_distributions": "taxable_with_20k_exclusion",
+        "roth_ira_distributions": "exempt",
+        "401k_distributions": "taxable_with_20k_exclusion",
+        "pension_income": "partially_exempt",
+        "social_security": "exempt",
+        "_note": "NY allows a $20,000 exclusion on pension/retirement income for those 59.5+. Amounts above $20K are taxable at full NY progressive rates."
+      },
+      "roth_conversion_treatment": {
+        "taxable": true,
+        "rate_type": "progressive",
+        "_note": "Conversions fully taxable at NY progressive rates. Future Roth distributions exempt."
+      },
+      "capital_gains_treatment": {
+        "taxed_as_ordinary_income": true,
+        "rate_type": "progressive"
+      },
+      "planning_notes": [
+        "NY City residents pay additional NYC income tax (3.078%-3.876%) on top of NY State.",
+        "$20K retirement income exclusion applies per person — MFJ couple can exclude $40K total.",
+        "Above the $20K exclusion, IRA/401k distributions taxed at full NY progressive rates.",
+        "REQUIRES FULL PROGRESSIVE BRACKET MODELING."
+      ]
+    }
+  },
+
+  "wash_sale_rule": {
+    "_note": "Applies to tax-loss harvesting. Encoded here for reference — not a tax rate but a critical TLH constraint.",
+    "disallowance_window_days": 30,
+    "applies_to_all_accounts": true,
+    "accounts_included": [
+      "taxable_brokerage",
+      "traditional_ira",
+      "roth_ira",
+      "401k",
+      "spouse_accounts"
+    ],
+    "substantially_identical_note": "IRS has not defined 'substantially identical' precisely. Same security = definite wash sale. Similar ETFs tracking different indexes = generally NOT substantially identical. Use judgment.",
+    "capital_loss_carryforward": {
+      "annual_ordinary_income_offset": 3000,
+      "carryforward": "indefinite"
+    }
+  },
+
+  "growth_assumptions": {
+    "_note": "Default assumptions used in projections when client-specific returns not available. Advisor should override based on client portfolio.",
+    "default_pretax_nominal": 0.06,
+    "default_roth_nominal": 0.06,
+    "default_taxable_nominal": 0.07,
+    "default_inflation": 0.025,
+    "default_real_return": 0.035
+  },
+
+  "planning_constants": {
+    "rmd_age": 73,
+    "medicare_eligibility_age": 65,
+    "ss_full_retirement_age_born_1960_plus": 67,
+    "ss_early_filing_age": 62,
+    "ss_max_delay_age": 70,
+    "ss_delay_bonus_per_year": 0.08,
+    "qualified_distribution_age": 59.5,
+    "roth_five_year_rule_note": "Roth IRA must be 5 years old before earnings can be withdrawn tax-free. Each conversion has its own 5-year holding period for penalty purposes (pre-59.5 only)."
+  },
+
+  "annual_update_checklist": {
+    "_note": "Run through this checklist each November/December for the following tax year.",
+    "items": [
+      { "item": "Federal tax brackets", "source": "IRS Rev. Proc. (announced Oct/Nov)", "timing": "November" },
+      { "item": "Standard deductions", "source": "IRS Rev. Proc.", "timing": "November" },
+      { "item": "LTCG brackets", "source": "IRS Rev. Proc.", "timing": "November" },
+      { "item": "IRMAA Part B thresholds and premiums", "source": "CMS announcement", "timing": "November" },
+      { "item": "IRMAA Part D surcharges", "source": "CMS announcement", "timing": "November" },
+      { "item": "401k/403b contribution limits", "source": "IRS Notice", "timing": "October/November" },
+      { "item": "IRA contribution limits", "source": "IRS Notice", "timing": "October/November" },
+      { "item": "HSA contribution limits", "source": "IRS Rev. Proc.", "timing": "May (for following year)" },
+      { "item": "Roth IRA income phase-out ranges", "source": "IRS Notice", "timing": "October/November" },
+      { "item": "ACA FPL thresholds", "source": "HHS.gov", "timing": "January" },
+      { "item": "Gift tax annual exclusion", "source": "IRS Rev. Proc.", "timing": "October/November" },
+      { "item": "Estate tax exemption", "source": "IRS Rev. Proc.", "timing": "October/November" },
+      { "item": "State tax rates and brackets", "source": "State dept. of revenue websites / Tax Foundation", "timing": "December/January" },
+      { "item": "IL personal exemption amount", "source": "Illinois DOR", "timing": "December" },
+      { "item": "RMD life expectancy table", "source": "IRS Pub 590-B", "timing": "Check for updates (rare)" },
+      { "item": "NIIT thresholds", "source": "Not inflation-adjusted — no update needed unless law changes", "timing": "N/A" },
+      { "item": "SS taxation thresholds", "source": "Not inflation-adjusted — no update needed unless law changes", "timing": "N/A" }
+    ]
+  }
+}

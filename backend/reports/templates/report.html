@@ -433,7 +433,7 @@
 
 <!-- ===== 3. DO-NOTHING vs THIS PLAN COMPARISON ===== -->
 {% set dnc = step4.get('do_nothing_comparison', {}) %}
-{% if dnc and dnc.get('pretax_at_73_without_plan') %}
+{% if dnc and (dnc.get('pretax_at_73_without_plan') or dnc.get('do_nothing_pretax_at_rmd')) %}
 <div id="do-nothing-comparison" class="section">
   <h2>Do-Nothing vs. This Plan: Side-by-Side Impact</h2>
   <p class="section-intro">This table shows the projected difference between taking no action versus implementing the full tax optimization plan.</p>
@@ -452,19 +452,19 @@
         <td>Pre-Tax Balance at Age 73</td>
         <td class="text-right">{{ dnc.get('pretax_at_73_without_plan') | currency }}</td>
         <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('pretax_at_73_with_plan') | currency }}</td>
-        <td class="text-right">{{ (dnc.get('pretax_at_73_with_plan', 0) - dnc.get('pretax_at_73_without_plan', 0)) | currency }}</td>
+        <td class="text-right" style="color:#16A34A;">{{ (dnc.get('pretax_at_73_without_plan', 0) - dnc.get('pretax_at_73_with_plan', 0)) | currency }} reduction</td>
       </tr>
       <tr>
         <td>First Year RMD (Age 73)</td>
         <td class="text-right">{{ dnc.get('first_rmd_without_plan') | currency }}</td>
         <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('first_rmd_with_plan') | currency }}</td>
-        <td class="text-right">{{ (dnc.get('first_rmd_with_plan', 0) - dnc.get('first_rmd_without_plan', 0)) | currency }}</td>
+        <td class="text-right" style="color:#16A34A;">{{ (dnc.get('first_rmd_without_plan', 0) - dnc.get('first_rmd_with_plan', 0)) | currency }} reduction</td>
       </tr>
       <tr>
         <td>Annual RMD Federal Tax (est.)</td>
         <td class="text-right">{{ dnc.get('annual_rmd_tax_without_plan') | currency }}</td>
         <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ dnc.get('annual_rmd_tax_with_plan') | currency }}</td>
-        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ (dnc.get('annual_rmd_tax_with_plan', 0) - dnc.get('annual_rmd_tax_without_plan', 0)) | currency }}/yr</td>
+        <td class="text-right" style="color:#16A34A;font-weight:bold;">{{ (dnc.get('annual_rmd_tax_without_plan', 0) - dnc.get('annual_rmd_tax_with_plan', 0)) | currency }}/yr savings</td>
       </tr>
       <tr>
         <td>Roth Balance at Age 73</td>
@@ -474,18 +474,30 @@
       </tr>
       <tr>
         <td>IRMAA Surcharge at 73</td>
-        <td class="text-right" style="{% if dnc.get('irmaa_triggered') %}color:#DC2626;font-weight:bold;{% endif %}">
-          {{ "Yes — surcharges triggered" if dnc.get('irmaa_triggered') else "No" }}
+        {% set dn_irmaa_label = dnc.get('do_nothing_irmaa_label') %}
+        {% set wp_irmaa_label = dnc.get('with_plan_irmaa_label') %}
+        {% set dn_irmaa = dnc.get('do_nothing_irmaa_triggered', dnc.get('irmaa_triggered', False)) %}
+        {% set wp_irmaa = dnc.get('with_plan_irmaa_triggered', False) %}
+        <td class="text-right" style="{{ 'color:#DC2626;font-weight:bold;' if dn_irmaa else '' }}">
+          {% if dn_irmaa_label %}{{ dn_irmaa_label }}{% else %}{{ "Yes — surcharges triggered" if dn_irmaa else "No" }}{% endif %}
         </td>
-        <td class="text-right" style="color:#16A34A;font-weight:bold;">Avoided</td>
+        <td class="text-right" style="{{ 'color:#DC2626;font-weight:bold;' if wp_irmaa else 'color:#16A34A;font-weight:bold;' }}">
+          {% if wp_irmaa_label %}{{ wp_irmaa_label }}{% else %}{{ "Yes — surcharges remain" if wp_irmaa else "Avoided" }}{% endif %}
+        </td>
         <td class="text-right">—</td>
       </tr>
+      {% if dnc.get('heir_benefit') %}
+      <tr>
+        <td colspan="4" style="font-size:9pt;color:#555;font-style:italic;">{{ dnc.get('heir_benefit') }}</td>
+      </tr>
+      {% endif %}
     </tbody>
     <tfoot>
       <tr class="total-row">
         <td colspan="2"><strong>Estimated Lifetime Tax Savings</strong></td>
         <td class="text-right" style="color:#16A34A;" colspan="2">
-          <strong>{{ dnc.get('estimated_lifetime_tax_savings') | currency }}</strong>
+          {% set ls = dnc.get('with_plan_lifetime_savings') %}
+          <strong>{% if ls %}{{ ls }}{% else %}{{ dnc.get('estimated_lifetime_tax_savings') | currency }}{% endif %}</strong>
         </td>
       </tr>
     </tfoot>
@@ -900,26 +912,36 @@
         <th class="text-right">Federal Tax</th>
         <th class="text-right">State Tax (IL 4.95%)</th>
         <th class="text-right">Total Tax</th>
-        <th class="text-right">Eff. Rate</th>
+        <th class="text-right">Total Rate<br/><span style="font-size:8pt;font-weight:normal;">(Fed + IL State)</span></th>
         <th class="text-right">Cumulative</th>
         <th class="text-center">IRMAA</th>
         <th>Notes</th>
       </tr>
     </thead>
     <tbody>
+      {% set ns = namespace(placeholder_count=0) %}
       {% for row in conversion_rows %}
-      <tr {% if ct.get('illustrative', False) %}style="background-color:#FFFBEB !important;"{% endif %}>
+      {% set is_placeholder = (row.get('convert_amount', 1) == 0) and not ct.get('illustrative', False) %}
+      {% if is_placeholder %}{% set ns.placeholder_count = ns.placeholder_count + 1 %}{% endif %}
+      <tr {% if ct.get('illustrative', False) %}style="background-color:#FFFBEB !important;"{% elif is_placeholder %}style="background-color:#f5f5f5;color:#888;"{% endif %}>
         <td>{{ row.get('year', '') }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('convert_amount') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('federal_tax') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('state_tax') or 0)) }}</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('total_tax') or 0)) }}</td>
-        <td class="text-right">{{ row.get('effective_rate_pct') or '—' }}%</td>
-        <td class="text-right">${{ "{:,.0f}".format((row.get('cumulative_converted') or 0)) }}</td>
-        <td class="text-center">{{ "✓" if row.get('irmaa_safe', False) else "✗" }}</td>
-        <td class="small-gray">{{ row.get('note', '') or '—' }}</td>
+        <td class="text-right">{{ ("$" ~ "{:,.0f}".format(row.get('convert_amount') or 0)) if not is_placeholder else "—" }}</td>
+        <td class="text-right">{{ ("$" ~ "{:,.0f}".format(row.get('federal_tax') or 0)) if not is_placeholder else "—" }}</td>
+        <td class="text-right">{{ ("$" ~ "{:,.0f}".format(row.get('state_tax') or 0)) if not is_placeholder else "—" }}</td>
+        <td class="text-right">{{ ("$" ~ "{:,.0f}".format(row.get('total_tax') or 0)) if not is_placeholder else "—" }}</td>
+        <td class="text-right">{{ ((row.get('effective_rate_pct') or '—') ~ "%") if not is_placeholder else "—" }}</td>
+        <td class="text-right">{{ ("$" ~ "{:,.0f}".format(row.get('cumulative_converted') or 0)) if not is_placeholder else "—" }}</td>
+        <td class="text-center">{{ ("✓" if row.get('irmaa_safe', False) else "✗") if not is_placeholder else "—" }}</td>
+        <td class="small-gray">{% if is_placeholder %}<em>{{ row.get('note', '') or '—' }}</em>{% else %}{{ row.get('note', '') or '—' }}{% endif %}</td>
       </tr>
       {% endfor %}
+      {% if ns.placeholder_count > 0 %}
+      <tr>
+        <td colspan="9" style="font-size:8.5pt;color:#888;font-style:italic;padding:4px 8px;">
+          * {{ ns.placeholder_count }} year(s) shown in gray are not modeled — Social Security start age and benefit not yet provided. Supply SS data to generate personalized conversion amounts for those years.
+        </td>
+      </tr>
+      {% endif %}
       <tr class="total-row">
         <td><strong>Total</strong></td>
         <td class="text-right"><strong>${{ "{:,.0f}".format((ct.get('total_converted') or 0)) }}</strong></td>

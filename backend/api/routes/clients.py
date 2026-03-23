@@ -88,6 +88,7 @@ async def list_clients(advisor_id: str, db: AsyncSession = Depends(get_db)):
             .join(ClientFinancialSnapshotORM, PlanORM.snapshot_id == ClientFinancialSnapshotORM.id)
             .where(ClientFinancialSnapshotORM.client_id == client.id)
             .order_by(PlanORM.created_at.desc())
+            .limit(1)
         )
         latest_plan = plan_result.scalar_one_or_none()
 
