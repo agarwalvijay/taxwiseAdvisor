@@ -1,4 +1,5 @@
 """Step 4: Plan Synthesizer."""
+import datetime
 import json
 import logging
 import re as _re
@@ -49,6 +50,15 @@ _BRACKETS_2026_MFJ = [
 _STANDARD_DEDUCTION_MFJ_2026 = 30_000
 _IRMAA_TIER1_MFJ = 212_000
 _IRMAA_ANNUAL_COST_MFJ = 1_776  # Part B + Part D combined MFJ annual surcharge (Tier 1)
+_DISCLAIMER_TEXT = (
+    "This analysis was prepared by [Advisor Name] using TaxWise Advisor software as a planning tool. "
+    "It is intended to support informed discussion between you and your financial advisor and does not "
+    "constitute independent financial, tax, or legal advice. Tax laws change frequently and individual "
+    "circumstances vary. The projections and recommendations in this report are based on information "
+    "provided as of [Report Date] and involve assumptions about future income, tax rates, and investment "
+    "returns that may not materialize. Before implementing any strategy described in this report, please "
+    "consult with a qualified tax professional. Your advisor is responsible for the recommendations made to you."
+)
 
 
 def _project_balance(current_balance: float, years: int, annual_growth_rate: float = 0.06) -> float:
@@ -229,6 +239,9 @@ class PlanSynthesizer:
         # Deterministic with-plan comparison (Fix 1)
         result = _calculate_with_plan_comparison(result, snapshot, trajectory, conversions)
 
+        # Final deterministic sync to prevent cross-section contradictions in the report.
+        result = _enforce_consistency(result, snapshot)
+
         # Assertions
         if not result.priority_actions:
             raise ReasoningStepError(
@@ -333,34 +346,29 @@ def _post_process(
     """
     state = snapshot.personal.state.upper() if snapshot.personal.state else ""
 
-    # Step 0: Pass-through conversion_plan rows not already in ct.rows (Fix 2)
+    # Step 0: Treat step_2 conversion_plan as authoritative table source.
+    # Rebuild rows from step_2 to avoid drift between narrative and math sections.
     ct_pre = result.conversion_table
-    existing_years = {r.year for r in ct_pre.rows}
-    added_placeholders = 0
-    for entry in conversions.conversion_plan:
-        if entry.year not in existing_years:
-            ct_pre.rows.append(
-                YearlyConversionRow(
-                    year=entry.year,
-                    pre_conversion_income=0.0,
-                    convert_amount=entry.convert_amount,
-                    post_conversion_agi=entry.post_conversion_agi,
-                    federal_tax=entry.estimated_federal_tax,
-                    state_tax=entry.estimated_state_tax,
-                    total_tax=round(entry.estimated_federal_tax + entry.estimated_state_tax, 2),
-                    effective_rate_pct=0.0,
-                    cumulative_converted=0.0,  # recalculated in Step 1
-                    irmaa_safe=entry.irmaa_safe,
-                    note=entry.net_benefit_note if entry.net_benefit_note else None,
-                )
+    if conversions.conversion_plan:
+        ct_pre.rows = [
+            YearlyConversionRow(
+                year=entry.year,
+                pre_conversion_income=0.0,
+                convert_amount=entry.convert_amount,
+                post_conversion_agi=entry.post_conversion_agi,
+                federal_tax=entry.estimated_federal_tax,
+                state_tax=entry.estimated_state_tax,
+                total_tax=round(entry.estimated_federal_tax + entry.estimated_state_tax, 2),
+                effective_rate_pct=0.0,
+                cumulative_converted=0.0,  # recalculated in Step 1
+                irmaa_safe=entry.irmaa_safe,
+                note=entry.net_benefit_note if entry.net_benefit_note else None,
             )
-            existing_years.add(entry.year)
-            added_placeholders += 1
-    if added_placeholders:
-        ct_pre.rows.sort(key=lambda r: r.year)
+            for entry in sorted(conversions.conversion_plan, key=lambda e: e.year)
+        ]
         logger.info(
-            "plan_synthesizer _post_process step0: added %d pass-through rows from conversion_plan",
-            added_placeholders,
+            "plan_synthesizer _post_process step0: rebuilt conversion_table from step_2 rows (count=%d)",
+            len(ct_pre.rows),
         )
 
     rows = result.conversion_table.rows
@@ -614,6 +622,7 @@ def _calculate_with_plan_comparison(
     dnc.heir_benefit = heir_benefit_str
     dnc.do_nothing_irmaa_label = do_nothing_irmaa_label
     dnc.with_plan_irmaa_label = with_plan_irmaa_label
+    dnc.irmaa_triggered = do_nothing_irmaa_triggered
 
     logger.info(
         "plan_synthesizer _calculate_with_plan_comparison: "
@@ -622,5 +631,88 @@ def _calculate_with_plan_comparison(
         do_nothing_pretax, with_plan_pretax, total_converted,
         annual_savings, lifetime_savings_str,
     )
+
+    return result
+
+
+def _enforce_consistency(
+    result: PlanSynthesizerOutput,
+    snapshot: ClientFinancialSnapshotSchema,
+) -> PlanSynthesizerOutput:
+    """
+    Final deterministic harmonization to prevent contradictory report sections.
+    """
+    ct = result.conversion_table
+    dnc = result.do_nothing_comparison
+
+    # Keep legacy + canonical IRMAA fields aligned.
+    dnc.irmaa_triggered = dnc.do_nothing_irmaa_triggered
+
+    # Use deterministic annual-savings math for the legacy single-value savings field.
+    annual_savings = max(0.0, dnc.annual_rmd_tax_without_plan - dnc.annual_rmd_tax_with_plan)
+    dnc.estimated_lifetime_tax_savings = round(annual_savings * 20, 2)
+
+    # Ensure legal text remains stable for reporting/compliance.
+    result.disclaimer = _DISCLAIMER_TEXT
+
+    # Deterministic summary text grounded in computed values.
+    years = sorted(r.year for r in ct.rows)
+    if years:
+        start_year, end_year = years[0], years[-1]
+    else:
+        start_year = end_year = None
+
+    if dnc.with_plan_lifetime_savings:
+        savings_phrase = dnc.with_plan_lifetime_savings
+    else:
+        savings_phrase = f"${dnc.estimated_lifetime_tax_savings:,.0f}"
+
+    conversion_desc = (
+        f"${ct.total_converted:,.0f} over {len(years)} year(s)"
+        if years else
+        "$0 across 0 years"
+    )
+    window_desc = f"{start_year}-{end_year}" if start_year and end_year else "the conversion window"
+    result.executive_summary = (
+        f"Projected pre-tax balance at age 73 is ${dnc.pretax_at_73_without_plan:,.0f}, with a first-year "
+        f"RMD of ${dnc.first_rmd_without_plan:,.0f}. This plan models Roth conversions of {conversion_desc} "
+        f"during {window_desc} at a blended total rate of {ct.blended_effective_rate_pct:.1f}%. "
+        f"Estimated lifetime tax savings: {savings_phrase}."
+    )
+    result.narrative = (
+        f"Without action, projected pre-tax balance at age 73 is ${dnc.pretax_at_73_without_plan:,.0f}. "
+        f"With the modeled conversion plan, projected pre-tax balance at age 73 falls to "
+        f"${dnc.pretax_at_73_with_plan:,.0f}, reducing first-year RMD by "
+        f"${max(0.0, dnc.first_rmd_without_plan - dnc.first_rmd_with_plan):,.0f}. "
+        f"Estimated lifetime tax savings: {savings_phrase}."
+    )
+
+    # Normalize Roth-conversion action text so it reflects computed totals.
+    current_year = datetime.date.today().year
+    for action in result.priority_actions:
+        if action.category != "roth_conversion":
+            continue
+        if years:
+            start_year = years[0]
+            end_year = years[-1]
+            avg = (ct.total_converted / len(years)) if years else 0.0
+            action.action = (
+                f"Implement a systematic Roth conversion plan from {start_year} through {end_year}, "
+                f"converting approximately ${avg:,.0f} per year (total ${ct.total_converted:,.0f}) "
+                f"from pre-tax accounts to Roth accounts."
+            )
+            action.urgency = "this_year" if start_year <= current_year else "multi_year"
+        action.rationale = (
+            f"Modeled conversions reduce projected pre-tax balance at age 73 from "
+            f"${dnc.pretax_at_73_without_plan:,.0f} to ${dnc.pretax_at_73_with_plan:,.0f}, "
+            f"lowering projected RMD tax and improving Roth tax-free balance growth."
+        )
+        action.consequence = (
+            "If you don't act: projected RMD-related tax remains higher and the plan's modeled "
+            f"lifetime tax savings of {savings_phrase} may not be realized."
+        )
+        action.estimated_benefit = (
+            f"{savings_phrase} estimated lifetime tax savings with lower projected RMD burden."
+        )
 
     return result
