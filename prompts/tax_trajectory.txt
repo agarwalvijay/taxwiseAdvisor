@@ -41,6 +41,17 @@ You are a tax analysis engine for a financial planning software tool. You perfor
 - Default growth rate: 6% nominal per year
 - Project pre-tax balance: current_pretax * (1.06)^years_until_rmd
 
+### DETERMINISTIC OVERRIDE AWARENESS — MANDATORY
+If input data includes deterministic projection values (for projected pre-tax at RMD, first RMD, years until RMD),
+treat those as final numeric ground truth.
+Do NOT output alternate numeric values for those fields.
+
+### MISSING-DATA LANGUAGE SAFETY
+When Social Security values or retirement income inputs are missing:
+- classify IRMAA exposure as conditional/potential rather than certain
+- explicitly state which missing inputs could change the conclusion
+- avoid definitive wording that implies confirmed surcharge outcomes without complete income inputs
+
 ### Urgency Classification
 - urgency = "high" if ANY of:
   - Projected first RMD + other income crosses ANY IRMAA tier
@@ -66,10 +77,9 @@ Analysis:
 - Current bracket: 32% (AGI $271k, taxable income after $30k std deduction = $241k, in 32% bracket $206,701–$394,600)
 - Conversion window: retire at 62 (year 2034 if age 54 in 2026), SS starts at 70 (year 2042). Low/zero income years: 2028–2032 from projections.
 - Years until RMD: 73 - 54 = 19 years
-- Projected pre-tax at 73: $1,057,000 * (1.06)^19 ≈ $3,197,000 (but snapshot shows $2,031,000 — use snapshot value if provided)
-- First RMD: $2,031,000 / 26.5 ≈ $76,642
-- IRMAA check: RMD ($76,642) + SS annual ($3,520 * 12 = $42,240) = ~$118,882 + other income → if other income exists this could exceed $212k IRMAA tier
-- Actually at age 73: RMD alone is $76,642 and SS ($42,240) = $118,882, which is BELOW $212k. But with 6% growth from now to 73, pre-tax balance grows to ~$3.2M, RMD ≈ $120k, total with SS ≈ $162k — approaching $212k. Flag as IRMAA risk.
+- Projected pre-tax at 73: $1,057,000 × (1.06)^19 ≈ $3,198,000 (deterministic; use pre-calculated value from input if provided, do not override)
+- First RMD: $3,198,000 / 26.5 ≈ $120,679
+- IRMAA check: RMD ($120,679) + SS annual ($3,520 × 12 = $42,240) = ~$162,919 — below $212k today but approaching threshold. Pre-tax balance > $1M → urgency "high". Without conversions, continued growth will push RMDs above the IRMAA Tier 1 threshold. Flag as IRMAA risk.
 
 Output:
 ```json
@@ -80,14 +90,14 @@ Output:
   "rmd_bracket_estimate": 0.24,
   "irmaa_risk": {
     "flagged": true,
-    "reason": "Projected pre-tax balance of ~$2,031,000 at age 73 generates a first RMD of ~$76,642. Combined with Social Security income of ~$42,240/year, total income approaches IRMAA Tier 1 threshold of $212,000. Without conversions, continued growth will push RMDs well above this threshold.",
+    "reason": "Projected pre-tax balance of ~$3,198,000 at age 73 generates a first RMD of ~$120,679. Combined with Social Security income of ~$42,240/year, total income is ~$162,919 — approaching the $212,000 IRMAA Tier 1 threshold. Without conversions, continued pre-tax growth will push RMDs above this threshold.",
     "tier_at_risk": 1
   },
   "conversion_window_years": [2028, 2029, 2030, 2031, 2032],
   "conversion_window_rationale": "Client projects zero earned income from 2028–2031 and minimal income in 2032 ($15k consulting). These years, between retirement at 62 and SS start at 70, represent the optimal Roth conversion window before RMDs begin at 73.",
   "years_until_rmd": 19,
-  "projected_first_rmd": 76642.0,
-  "projected_pretax_at_rmd": 2031000.0,
+  "projected_first_rmd": 120679.0,
+  "projected_pretax_at_rmd": 3198000.0,
   "urgency": "high",
   "ss_taxation_risk": true,
   "narrative": "Client is currently in the 32% federal bracket with a pre-tax balance exceeding $1M. Without intervention, growing pre-tax accounts will generate RMDs that push into higher brackets and trigger IRMAA surcharges. The retirement gap years (2028–2032) offer a narrow window to convert at 22% or lower effective rates, significantly reducing future RMD exposure.",
@@ -116,8 +126,8 @@ You must output valid JSON with exactly these fields:
   "conversion_window_years": [2028, 2029, 2030, 2031, 2032],
   "conversion_window_rationale": "...",
   "years_until_rmd": 19,
-  "projected_first_rmd": 76642.0,
-  "projected_pretax_at_rmd": 2031000.0,
+  "projected_first_rmd": 120679.0,
+  "projected_pretax_at_rmd": 3198000.0,
   "urgency": "high",
   "ss_taxation_risk": true,
   "narrative": "...",

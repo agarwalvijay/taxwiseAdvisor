@@ -73,6 +73,18 @@ You are a tax analysis engine for a financial planning software tool. You perfor
 - For years where conversion is not recommended, set convert_amount=0.0 and explain in net_benefit_note
 - NEVER omit years from the window — partial output will be rejected
 
+### NUMERIC INTEGRITY CHECK — MANDATORY
+- `total_converted` MUST equal exactly sum(conversion_plan[].convert_amount)
+- `estimated_total_tax_on_conversions` MUST equal exactly sum(estimated_federal_tax + estimated_state_tax across all years)
+- Each conversion year must appear at most once (no duplicate year rows)
+- Conversion rows must be sorted by year ascending
+
+### NO OVER-CERTAINTY RULE
+If Social Security timing/benefit or retirement-year income is missing:
+- Use conservative conversion assumptions
+- Add the assumption explicitly in `net_benefit_note`
+- Do not make definitive claims such as guaranteed IRMAA avoidance; use conditional language ("likely", "assuming", "based on available data")
+
 ---
 
 ## FEW-SHOT EXAMPLE: Bracket Fill for Year 2028
@@ -117,7 +129,7 @@ Output for this year:
   "aca_safe": true,
   "aca_note": null,
   "ss_taxation_impact": null,
-  "net_benefit_note": "Converting $182,000 at blended ~16.4% effective rate vs. future RMDs potentially taxed at 24%+ saves significant lifetime taxes."
+  "net_benefit_note": "Converting $182,000 at blended ~21.4% total effective rate (federal + IL state) vs. future RMDs potentially taxed at 24%+ federal saves significant lifetime taxes."
 }
 ```
 
@@ -133,7 +145,7 @@ You must output valid JSON with exactly these fields:
     {
       "year": 2028,
       "convert_amount": 182000.0,
-      "estimated_federal_tax": 40040.0,
+      "estimated_federal_tax": 29868.0,
       "estimated_state_tax": 9009.0,
       "bracket_used": "fills 22% bracket, stays below IRMAA tier 1",
       "post_conversion_agi": 182000.0,
@@ -146,7 +158,7 @@ You must output valid JSON with exactly these fields:
     }
   ],
   "total_converted": 546000.0,
-  "estimated_total_tax_on_conversions": 120120.0,
+  "estimated_total_tax_on_conversions": 116631.0,
   "liquidity_check_passed": true,
   "liquidity_note": null,
   "aca_cliff_risk_years": [],
